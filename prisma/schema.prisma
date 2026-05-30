@@ -1,0 +1,32 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model PortfolioSnapshot {
+  id         String            @id @default(cuid())
+  capturedAt DateTime          @unique
+  totalRub   Decimal           @db.Decimal(18, 2)
+  createdAt  DateTime          @default(now())
+  components SnapshotComponent[]
+
+  @@index([capturedAt])
+}
+
+model SnapshotComponent {
+  id         String            @id @default(cuid())
+  snapshotId String
+  sourceId   String
+  sourceName String
+  totalRub   Decimal           @db.Decimal(18, 2)
+  details    Json?
+
+  snapshot PortfolioSnapshot   @relation(fields: [snapshotId], references: [id], onDelete: Cascade)
+
+  @@index([sourceId])
+  @@unique([snapshotId, sourceId])
+}

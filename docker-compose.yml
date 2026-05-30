@@ -1,0 +1,55 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: portfolio-exporter-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: portfolio_exporter
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d portfolio_exporter"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: migrator
+    container_name: portfolio-exporter-migrate
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: portfolio-exporter-app
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      BTC_ADDRESSES: ${BTC_ADDRESSES}
+      ETH_ADDRESSES: ${ETH_ADDRESSES}
+      SOL_ADDRESSES: ${SOL_ADDRESSES}
+      CRYPTO_FIAT: ${CRYPTO_FIAT}
+      MORALIS_API_KEY: ${MORALIS_API_KEY}
+      BCS_REFRESH_TOKEN: ${BCS_REFRESH_TOKEN}
+      BCS_CLIENT_ID: ${BCS_CLIENT_ID}
+      TINVEST_API_TOKEN: ${TINVEST_API_TOKEN}
+      TINVEST_PORTFOLIO_CURRENCY: ${TINVEST_PORTFOLIO_CURRENCY}
+      ALLOW_SELF_SIGNED_TLS: ${ALLOW_SELF_SIGNED_TLS}

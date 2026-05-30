@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Portfolio Exporter">
+  <rect width="128" height="128" rx="24" fill="#f0f7f4"/>
+  <path d="M24 88h80" stroke="#2c6e62" stroke-width="8" stroke-linecap="round"/>
+  <path d="M34 74 52 58l16 10 26-24" fill="none" stroke="#2c6e62" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="34" cy="74" r="4" fill="#2c6e62"/>
+  <circle cx="52" cy="58" r="4" fill="#2c6e62"/>
+  <circle cx="68" cy="68" r="4" fill="#2c6e62"/>
+  <circle cx="94" cy="44" r="4" fill="#2c6e62"/>
+</svg>
