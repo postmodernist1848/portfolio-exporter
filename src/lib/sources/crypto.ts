@@ -178,6 +178,12 @@ async function fetchMoralisSolanaNetWorthUsd(address: string): Promise<number> {
 
   const totalUsd = findUsdTotal(response);
   if (totalUsd === null) {
+    console.error('[source:crypto:moralis] solana payload without USD total', {
+      address,
+      payloadType: Array.isArray(response) ? 'array' : typeof response,
+      payloadKeys: response && typeof response === 'object' ? Object.keys(response as Record<string, unknown>) : [],
+      payloadPreview: JSON.stringify(response).slice(0, 500)
+    });
     throw new Error('Moralis Solana portfolio: USD total field not found');
   }
   return toFiniteNumber(totalUsd);
