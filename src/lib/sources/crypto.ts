@@ -9,9 +9,19 @@ type MoralisNetWorthResponse = {
 type MoralisSolanaPortfolioResponse = Record<string, unknown>;
 
 type CoinGeckoPriceResponse = Record<string, Record<string, number>>;
+type CbrDailyResponse = {
+  Valute?: {
+    USD?: {
+      Value?: number;
+    };
+  };
+};
 
 const MORALIS_RETRIES = 5;
 const MORALIS_BACKOFF_BASE_MS = 1000;
+const USD_RUB_CACHE_TTL_MS = 60 * 60 * 1000;
+
+let usdRubCache: { rate: number; expiresAt: number } | null = null;
 
 function parseAddresses(raw: string | undefined): string[] {
   if (!raw) {
@@ -89,6 +99,28 @@ async function fetchPriceMap(ids: string[], fiat: string): Promise<Record<string
   );
 
   return Object.fromEntries(ids.map((id) => [id, response[id]?.[fiat] ?? 0]));
+}
+
+async function fetchUsdRubRate(): Promise<number> {
+  const now = Date.now();
+  if (usdRubCache && usdRubCache.expiresAt > now) {
+    console.log('[source:crypto:cbr] USD/RUB cache hit', { rate: usdRubCache.rate });
+    return usdRubCache.rate;
+  }
+
+  const response = await getJson<CbrDailyResponse>('https://www.cbr-xml-daily.ru/daily_json.js');
+  const rate = response.Valute?.USD?.Value ?? 0;
+  const safeRate = toFiniteNumber(rate);
+
+  if (safeRate > 0) {
+    usdRubCache = {
+      rate: safeRate,
+      expiresAt: now + USD_RUB_CACHE_TTL_MS
+    };
+  }
+
+  console.log('[source:crypto:cbr] USD/RUB fetched', { rate: safeRate });
+  return safeRate;
 }
 
 async function fetchWithRetry<T>(scope: string, fn: () => Promise<T>): Promise<T> {
@@ -244,17 +276,17 @@ export class CryptoSource implements PortfolioSource {
     const ethAddresses = parseAddresses(env.ETH_ADDRESSES);
     const solAddresses = parseAddresses(env.SOL_ADDRESSES);
 
-    const [btcBalance, solBalance, prices, evmUsd, solUsd] = await Promise.all([
+    const [btcBalance, solBalance, prices, usdRub, evmUsd, solUsd] = await Promise.all([
       fetchBtcBalance(btcAddresses),
       fetchSolBalance(solAddresses),
-      fetchPriceMap(['bitcoin', 'solana', 'usd'], fiat),
+      fetchPriceMap(['bitcoin', 'solana'], fiat),
+      fetchUsdRubRate(),
       fetchMoralisEvmAddressesUsd(ethAddresses),
       fetchMoralisSolAddressesUsd(solAddresses)
     ]);
 
     const btcRub = toFiniteNumber(btcBalance * (prices.bitcoin ?? 0));
     const solRubFallback = toFiniteNumber(solBalance * (prices.solana ?? 0));
-    const usdRub = toFiniteNumber(prices.usd ?? 0);
     const moralisEvmRub = toFiniteNumber(evmUsd * usdRub);
     const moralisSolRub = toFiniteNumber(solUsd * usdRub);
     const totalRub = toFiniteNumber(btcRub + moralisEvmRub + (moralisSolRub > 0 ? moralisSolRub : solRubFallback));
