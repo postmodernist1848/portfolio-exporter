@@ -2,44 +2,10 @@ import { getLatestSnapshot, getSourceHistory, getTotalHistory, saveSnapshot } fr
 import { collectLiveSnapshot } from '@/lib/sources';
 import type { PortfolioSnapshot } from '@/types/portfolio';
 
-const LIVE_CACHE_TTL_MS = 60_000;
-
-let liveCache: { snapshot: PortfolioSnapshot; expiresAt: number } | null = null;
-let liveInFlight: Promise<PortfolioSnapshot> | null = null;
-
 export async function collectAndSaveSnapshot(): Promise<PortfolioSnapshot> {
   const snapshot = await collectLiveSnapshot();
   await saveSnapshot(snapshot);
-  liveCache = {
-    snapshot,
-    expiresAt: Date.now() + LIVE_CACHE_TTL_MS
-  };
   return snapshot;
-}
-
-async function getLiveSnapshotCached(): Promise<PortfolioSnapshot> {
-  const now = Date.now();
-  if (liveCache && liveCache.expiresAt > now) {
-    return liveCache.snapshot;
-  }
-
-  if (liveInFlight) {
-    return liveInFlight;
-  }
-
-  liveInFlight = collectLiveSnapshot()
-    .then((snapshot) => {
-      liveCache = {
-        snapshot,
-        expiresAt: Date.now() + LIVE_CACHE_TTL_MS
-      };
-      return snapshot;
-    })
-    .finally(() => {
-      liveInFlight = null;
-    });
-
-  return liveInFlight;
 }
 
 export async function getDashboardData(): Promise<{
@@ -50,7 +16,7 @@ export async function getDashboardData(): Promise<{
   let snapshot: PortfolioSnapshot;
 
   try {
-    snapshot = await getLiveSnapshotCached();
+    snapshot = await collectLiveSnapshot({ useCache: true });
   } catch {
     const latestSnapshot = await getLatestSnapshot();
     if (!latestSnapshot) {

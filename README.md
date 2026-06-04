@@ -76,10 +76,12 @@ docker compose up -d
 - БКС: `https://trade-api.bcs.ru/http/authorization/`, `https://trade-api.bcs.ru/http/portfolio/`
 - Т-Банк: `https://developer.tbank.ru/invest/api/operations-service-get-portfolio`
 
-### Крипто (ETH/SOL + ERC-20 и другие токены)
+### Крипто
 
 - Обязательная переменная: `MORALIS_API_KEY`.
-- ETH/SOL адреса считаются через Moralis Wallet Net Worth API (с токенами), BTC - отдельно on-chain.
+- EVM адреса считаются через Moralis Wallet Net Worth API (native assets + токены).
+- BTC считается отдельно on-chain.
+- Solana считается только как native SOL через public RPC и цену SOL/RUB.
 - В snapshot сохраняется итоговая фиатная стоимость.
 
 ## Сбор данных

@@ -6,7 +6,6 @@ import type { PortfolioSource } from './types';
 type MoralisNetWorthResponse = {
   total_networth_usd?: string;
 };
-type MoralisSolanaPortfolioResponse = Record<string, unknown>;
 
 type CoinGeckoPriceResponse = Record<string, Record<string, number>>;
 type CbrDailyResponse = {
@@ -156,71 +155,6 @@ async function fetchMoralisEvmNetWorthUsd(address: string): Promise<number> {
   return toFiniteNumber(value);
 }
 
-function findUsdTotal(value: unknown): number | null {
-  if (value === null || value === undefined) {
-    return null;
-  }
-  if (Array.isArray(value)) {
-    for (const item of value) {
-      const found = findUsdTotal(item);
-      if (found !== null) {
-        return found;
-      }
-    }
-    return null;
-  }
-  if (typeof value !== 'object') {
-    return null;
-  }
-
-  const entries = Object.entries(value as Record<string, unknown>);
-  for (const [key, raw] of entries) {
-    const normalized = key.toLowerCase();
-    if (
-      normalized === 'total_usd' ||
-      normalized === 'totalusd' ||
-      normalized === 'total_networth_usd' ||
-      normalized === 'networthusd' ||
-      normalized === 'usdvalue'
-    ) {
-      const parsed = typeof raw === 'string' ? Number(raw) : typeof raw === 'number' ? raw : NaN;
-      if (Number.isFinite(parsed)) {
-        return parsed;
-      }
-    }
-  }
-
-  for (const [, raw] of entries) {
-    const found = findUsdTotal(raw);
-    if (found !== null) {
-      return found;
-    }
-  }
-
-  return null;
-}
-
-async function fetchMoralisSolanaNetWorthUsd(address: string): Promise<number> {
-  const response = await fetchWithRetry(`[source:crypto:moralis:sol:${address}]`, async () =>
-    getJson<MoralisSolanaPortfolioResponse>(
-      `https://solana-gateway.moralis.io/account/mainnet/${address}/portfolio`,
-      { headers: moralisHeaders() }
-    )
-  );
-
-  const totalUsd = findUsdTotal(response);
-  if (totalUsd === null) {
-    console.error('[source:crypto:moralis] solana payload without USD total', {
-      address,
-      payloadType: Array.isArray(response) ? 'array' : typeof response,
-      payloadKeys: response && typeof response === 'object' ? Object.keys(response as Record<string, unknown>) : [],
-      payloadPreview: JSON.stringify(response).slice(0, 500)
-    });
-    throw new Error('Moralis Solana portfolio: USD total field not found');
-  }
-  return toFiniteNumber(totalUsd);
-}
-
 async function fetchMoralisEvmAddressesUsd(addresses: string[]): Promise<number> {
   let sum = 0;
   for (const address of addresses) {
@@ -229,23 +163,6 @@ async function fetchMoralisEvmAddressesUsd(addresses: string[]): Promise<number>
       sum += value;
     } catch (error) {
       console.error('[source:crypto:moralis] evm address failed', {
-        address,
-        error: error instanceof Error ? error.message : String(error),
-        cause: error instanceof Error ? error.cause : undefined
-      });
-    }
-  }
-  return sum;
-}
-
-async function fetchMoralisSolAddressesUsd(addresses: string[]): Promise<number> {
-  let sum = 0;
-  for (const address of addresses) {
-    try {
-      const value = await fetchMoralisSolanaNetWorthUsd(address);
-      sum += value;
-    } catch (error) {
-      console.error('[source:crypto:moralis] solana address failed', {
         address,
         error: error instanceof Error ? error.message : String(error),
         cause: error instanceof Error ? error.cause : undefined
@@ -276,20 +193,18 @@ export class CryptoSource implements PortfolioSource {
     const ethAddresses = parseAddresses(env.ETH_ADDRESSES);
     const solAddresses = parseAddresses(env.SOL_ADDRESSES);
 
-    const [btcBalance, solBalance, prices, usdRub, evmUsd, solUsd] = await Promise.all([
+    const [btcBalance, solBalance, prices, usdRub, evmUsd] = await Promise.all([
       fetchBtcBalance(btcAddresses),
       fetchSolBalance(solAddresses),
       fetchPriceMap(['bitcoin', 'solana'], fiat),
       fetchUsdRubRate(),
-      fetchMoralisEvmAddressesUsd(ethAddresses),
-      fetchMoralisSolAddressesUsd(solAddresses)
+      fetchMoralisEvmAddressesUsd(ethAddresses)
     ]);
 
     const btcRub = toFiniteNumber(btcBalance * (prices.bitcoin ?? 0));
-    const solRubFallback = toFiniteNumber(solBalance * (prices.solana ?? 0));
+    const solRub = toFiniteNumber(solBalance * (prices.solana ?? 0));
     const moralisEvmRub = toFiniteNumber(evmUsd * usdRub);
-    const moralisSolRub = toFiniteNumber(solUsd * usdRub);
-    const totalRub = toFiniteNumber(btcRub + moralisEvmRub + (moralisSolRub > 0 ? moralisSolRub : solRubFallback));
+    const totalRub = toFiniteNumber(btcRub + moralisEvmRub + solRub);
 
     console.log('[source:crypto] snapshot', {
       btcAddresses: btcAddresses.length,
@@ -299,11 +214,9 @@ export class CryptoSource implements PortfolioSource {
       solBalance,
       btcRub,
       evmUsd,
-      solUsd,
       usdRub,
       moralisEvmRub,
-      moralisSolRub,
-      solRubFallback,
+      solRub,
       totalRub
     });
 
@@ -314,7 +227,7 @@ export class CryptoSource implements PortfolioSource {
       capturedAt: new Date().toISOString(),
       details: {
         fiat,
-        provider: 'moralis',
+        provider: 'moralis-evm-native-sol',
         addressesTotal: btcAddresses.length + ethAddresses.length + solAddresses.length
       }
     };
