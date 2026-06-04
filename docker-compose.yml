@@ -16,6 +16,7 @@ services:
       retries: 20
 
   migrate:
+    image: portfolio-exporter-migrate:latest
     build:
       context: .
       dockerfile: Dockerfile
@@ -29,6 +30,7 @@ services:
       DATABASE_URL: ${DATABASE_URL}
 
   app:
+    image: portfolio-exporter-app:latest
     build:
       context: .
       dockerfile: Dockerfile

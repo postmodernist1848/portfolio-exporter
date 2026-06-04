@@ -52,6 +52,27 @@ docker compose up -d
 
 Секреты и настройки задаются только в `.env`, а `docker-compose.yml` использует подстановки `${...}`.
 
+## Remote Deploy
+
+Основной деплой собирает Docker-образы локально, отправляет их на сервер и запускает compose без сборки на сервере:
+
+```bash
+make deploy
+```
+
+Старый режим со сборкой на сервере оставлен отдельно:
+
+```bash
+make deploy-build-remote
+```
+
+Проверка:
+
+```bash
+make deploy-status
+make deploy-logs
+```
+
 ## Реальные API интеграции
 
 ### БКС Мир Инвестиций
