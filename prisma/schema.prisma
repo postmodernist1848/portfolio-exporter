@@ -11,6 +11,10 @@ model PortfolioSnapshot {
   id         String            @id @default(cuid())
   capturedAt DateTime          @unique
   totalRub   Decimal           @db.Decimal(18, 2)
+  status     String            @default("complete")
+  freshSourceCount Int         @default(0)
+  staleSourceCount Int         @default(0)
+  errorSourceCount Int         @default(0)
   createdAt  DateTime          @default(now())
   components SnapshotComponent[]
 
@@ -23,6 +27,9 @@ model SnapshotComponent {
   sourceId   String
   sourceName String
   totalRub   Decimal           @db.Decimal(18, 2)
+  status     String            @default("ok")
+  observedAt DateTime?
+  errorMessage String?
   details    Json?
 
   snapshot PortfolioSnapshot   @relation(fields: [snapshotId], references: [id], onDelete: Cascade)

@@ -9,3 +9,4 @@ coverage
 *.log
 prisma/migrations
 data/postgres
+*.tsbuildinfo

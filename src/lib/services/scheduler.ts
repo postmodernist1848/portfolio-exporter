@@ -1,40 +1,44 @@
-import { collectAndSaveSnapshot } from '@/lib/services/portfolio-service';
+import { getLatestSnapshot } from '@/lib/db/portfolio-repository';
+import { runScheduledCollection } from '@/lib/services/collection-coordinator';
 
 const HOUR_MS = 60 * 60 * 1000;
 let started = false;
-let alignTimer: NodeJS.Timeout | null = null;
 
 async function runTick(label: string): Promise<void> {
   try {
-    const snapshot = await collectAndSaveSnapshot();
-    console.log(
-      `[scheduler:${label}] snapshot saved at ${snapshot.capturedAt}, total=${snapshot.totalRub.toFixed(2)} RUB`
-    );
+    const snapshot = await runScheduledCollection();
+    console.info('[scheduler] snapshot saved', { label, capturedAt: snapshot.capturedAt });
   } catch (error) {
-    console.error(`[scheduler:${label}] snapshot failed`, error);
+    console.error('[scheduler] collection failed', {
+      label,
+      error: error instanceof Error ? error.message : 'Unknown failure'
+    });
   }
 }
 
 export function startPortfolioScheduler(): void {
-  if (started) {
-    return;
-  }
-
+  if (started) return;
   started = true;
-  const scheduleNextTick = () => {
+
+  void getLatestSnapshot()
+    .then((latest) => {
+      if (!latest || Date.now() - Date.parse(latest.capturedAt) >= HOUR_MS) {
+        return runTick('startup');
+      }
+    })
+    .catch((error) => console.error('[scheduler] startup check failed', {
+      error: error instanceof Error ? error.message : 'Unknown failure'
+    }));
+
+  const scheduleNext = () => {
     const now = new Date();
     const nextHour = new Date(now);
     nextHour.setMinutes(0, 0, 0);
     nextHour.setHours(nextHour.getHours() + 1);
-    const delayMs = Math.max(0, nextHour.getTime() - now.getTime());
-
-    alignTimer = setTimeout(async () => {
+    setTimeout(async () => {
       await runTick('hourly');
-      scheduleNextTick();
-    }, delayMs);
-
-    console.log(`[scheduler] next tick at ${nextHour.toISOString()}`);
+      scheduleNext();
+    }, nextHour.getTime() - now.getTime());
   };
-
-  scheduleNextTick();
+  scheduleNext();
 }

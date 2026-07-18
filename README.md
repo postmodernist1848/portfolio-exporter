@@ -8,8 +8,9 @@
   - Крипто (BTC/ETH/SOL по адресам)
   - БКС Мир Инвестиций (через API)
   - Т Инвестиции (через API)
+  - OKX (общая стоимость аккаунта через API)
 - Исторические snapshots в PostgreSQL.
-- Серверный рендер dashboard из БД.
+- Серверный рендер dashboard только из БД, без запросов к провайдерам.
 - Встроенная в приложение почасовая джоба сбора данных.
 - API для ручного триггера сбора.
 - Графики общей стоимости и по каждому источнику.
@@ -87,22 +88,37 @@ make deploy-logs
 
 - Портфель: `POST https://invest-public-api.tbank.ru/rest/tinkoff.public.invest.api.contract.v1.OperationsService/GetPortfolio`
 - Счета: `POST https://invest-public-api.tbank.ru/rest/tinkoff.public.invest.api.contract.v1.UsersService/GetAccounts`
-- Приложение суммирует все открытые счета последовательно и игнорирует счет с названием `Кредитка`.
+- Приложение суммирует открытые счета в RUB независимо; сбой одного счета даёт частичный результат.
 - Нужны переменные:
   - `TINVEST_API_TOKEN`
-  - `TINVEST_PORTFOLIO_CURRENCY` (`RUB`/`USD`/`EUR`)
 
 Официальная документация:
 
 - БКС: `https://trade-api.bcs.ru/http/authorization/`, `https://trade-api.bcs.ru/http/portfolio/`
 - Т-Банк: `https://developer.tbank.ru/invest/api/operations-service-get-portfolio`
 
+### OKX
+
+- Используется приватный read-only endpoint `GET /api/v5/asset/asset-valuation?ccy=RUB`.
+- В портфель попадает поле `totalBal` — общая стоимость аккаунта уже в RUB, включая funding, trading и Earn-балансы.
+- Для региональных API-доменов можно переопределить `OKX_API_BASE_URL`.
+- Для API-ключа достаточно разрешения `Read`; торговые и withdrawal-разрешения не нужны.
+- Нужны переменные:
+  - `OKX_API_KEY`
+  - `OKX_SECRET_KEY`
+  - `OKX_API_PASSPHRASE`
+- Запрос подписывается HMAC-SHA256 с Base64-кодированием по схеме OKX.
+
+Документация OKX: `https://www.okx.com/docs-v5/en/`
+
 ### Крипто
 
-- Обязательная переменная: `MORALIS_API_KEY`.
+- `MORALIS_API_KEY` требуется только для EVM-адресов; BTC и Solana работают без него.
 - EVM адреса считаются через Moralis Wallet Net Worth API (native assets + токены).
 - BTC считается отдельно on-chain.
-- Solana считается только как native SOL через public RPC и цену SOL/RUB.
+- Solana считается как native SOL и SPL USDC через Solana JSON-RPC и цену SOL/RUB.
+- Для SPL USDC используется mainnet mint `EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v`.
+- RPC endpoint можно переопределить через `SOLANA_RPC_URL`.
 - В snapshot сохраняется итоговая фиатная стоимость.
 
 ## Сбор данных
@@ -110,10 +126,14 @@ make deploy-logs
 После запуска приложения сервер автоматически:
 
 - сохраняет snapshot каждый час в круглое время (`00:00`, `01:00`, `02:00`, ...).
+- сохраняет последнее успешное значение источника как устаревшее при временном сбое.
+- запускает стартовый сбор только при отсутствии снимка или если снимок старше часа.
 
 ### Ручной триггер
 
 - `POST /api/collect`
+
+Одновременные запросы объединяются в один сбор; публичный ручной запуск имеет cooldown 60 секунд.
 
 ## Эндпоинты
 

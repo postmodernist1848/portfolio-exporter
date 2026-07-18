@@ -1,7 +1,7 @@
 import { env } from '@/lib/config/env';
 import { getJson, getText } from '@/lib/services/http';
-import type { SourceSnapshot } from '@/types/portfolio';
-import type { PortfolioSource } from './types';
+import { z } from 'zod';
+import type { PortfolioSource, SourceCollectionResult } from './types';
 
 const BCS_AUTH_URL = 'https://be.broker.ru/trade-api-keycloak/realms/tradeapi/protocol/openid-connect/token';
 const BCS_PORTFOLIO_URL = 'https://be.broker.ru/trade-api-bff-portfolio/api/v1/portfolio';
@@ -26,23 +26,23 @@ async function getBcsAccessToken(): Promise<string> {
     grant_type: 'refresh_token'
   });
 
-  let payload: { access_token?: string };
+  let payload: { access_token: string };
   try {
-    payload = await getJson<{ access_token?: string }>(BCS_AUTH_URL, {
+    payload = await getJson(BCS_AUTH_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded'
       },
       body
+    }, z.object({ access_token: z.string().min(1) }), {
+      provider: 'bcs',
+      operation: 'authentication',
+      allowSelfSignedTls: env.BCS_ALLOW_SELF_SIGNED_TLS
     });
   } catch (error) {
     logFetchError('source:bcs:auth', error);
     throw error;
   }
-  if (!payload.access_token) {
-    throw new Error('BCS auth failed: access_token is missing');
-  }
-
   return payload.access_token;
 }
 
@@ -176,14 +176,13 @@ export class BcsSource implements PortfolioSource {
   id = 'bcs' as const;
   name = 'БКС Мир Инвестиций';
 
-  async fetchSnapshot(): Promise<SourceSnapshot> {
+  async fetchSnapshot(): Promise<SourceCollectionResult> {
     if (!env.BCS_REFRESH_TOKEN) {
       return {
         sourceId: this.id,
         sourceName: this.name,
         totalRub: 0,
-        capturedAt: new Date().toISOString(),
-        details: { status: 'API не настроен (BCS_REFRESH_TOKEN)' }
+        status: 'disabled'
       };
     }
 
@@ -194,6 +193,10 @@ export class BcsSource implements PortfolioSource {
         headers: {
           Authorization: `Bearer ${accessToken}`
         }
+      }, {
+        provider: 'bcs',
+        operation: 'portfolio',
+        allowSelfSignedTls: env.BCS_ALLOW_SELF_SIGNED_TLS
       });
     } catch (error) {
       logFetchError('source:bcs:portfolio', error);
@@ -202,31 +205,33 @@ export class BcsSource implements PortfolioSource {
     const payload = parsePayload(bodyText);
     const positions = getPositions(payload);
     const fromPositions = sumBcsPositionsRub(positions);
-    const fromPositionsRaw = positions.reduce((sum, position) => {
-      const value = toNumber(position.currentValueRub);
-      return sum + (value ?? 0);
-    }, 0);
     const fromRoot =
-      pickFirstNumberByKey(payload, new Set(['totalAmountRub', 'totalRub', 'portfolioAmountRub', 'totalValueRub'])) ??
-      0;
-    const totalRub = toFiniteNumber(fromPositions > 0 ? fromPositions : fromRoot);
+      pickFirstNumberByKey(payload, new Set(['totalAmountRub', 'totalRub', 'portfolioAmountRub', 'totalValueRub']));
+    const hasPositionValues = positions.some((position) =>
+      toNumber(position.currentValueRub) !== null ||
+      toNumber(position.balanceValueRub) !== null ||
+      (String(position.currency).toUpperCase() === 'RUB' && toNumber(position.currentValue) !== null)
+    );
+    if (!hasPositionValues && fromRoot === null) {
+      throw new Error('BCS portfolio response has no RUB total');
+    }
+    const totalRub = toFiniteNumber(hasPositionValues ? fromPositions : fromRoot!);
+    const calculationMethod = hasPositionValues ? 'deduplicated-positions' : 'root-total';
     console.log('[source:bcs] snapshot', {
       totalRub,
-      payloadType: Array.isArray(payload) ? 'array' : typeof payload,
-      payloadKeys: payload && typeof payload === 'object' ? Object.keys(payload as Record<string, unknown>) : [],
       positionsCount: positions.length,
-      firstPositionKeys: positions[0] ? Object.keys(positions[0]) : [],
-      fromPositionsRaw,
-      fromPositionsDedup: fromPositions
+      calculationMethod
     });
 
     return {
       sourceId: this.id,
       sourceName: this.name,
       totalRub,
-      capturedAt: new Date().toISOString(),
+      observedAt: new Date().toISOString(),
+      status: 'ok',
       details: {
-        raw: payload
+        positionsCount: positions.length,
+        calculationMethod
       }
     };
   }

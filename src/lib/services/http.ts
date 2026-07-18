@@ -1,94 +1,147 @@
-const HTTP_RETRIES = 4;
-const HTTP_BACKOFF_BASE_MS = 1000;
-const HTTP_LOG_PREVIEW = 400;
+import { randomUUID } from 'node:crypto';
+import { Agent } from 'undici';
+import type { ZodType } from 'zod';
 
-async function sleep(ms: number): Promise<void> {
-  await new Promise((resolve) => setTimeout(resolve, ms));
+const DEFAULT_TIMEOUT_MS = 15_000;
+const DEFAULT_ATTEMPTS = 4;
+const BACKOFF_BASE_MS = 500;
+
+export class HttpError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+    readonly retryAfterMs?: number
+  ) {
+    super(message);
+    this.name = 'HttpError';
+  }
 }
 
-function toPreview(value: string): string {
-  return value.length > HTTP_LOG_PREVIEW ? `${value.slice(0, HTTP_LOG_PREVIEW)}...` : value;
+type RequestContext = {
+  provider?: string;
+  operation?: string;
+  timeoutMs?: number;
+  attempts?: number;
+  allowSelfSignedTls?: boolean;
+};
+let selfSignedAgent: Agent | undefined;
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+function retryAfterMs(value: string | null): number | undefined {
+  if (!value) return undefined;
+  const seconds = Number(value);
+  if (Number.isFinite(seconds)) return Math.max(0, seconds * 1000);
+  const date = Date.parse(value);
+  return Number.isFinite(date) ? Math.max(0, date - Date.now()) : undefined;
 }
 
-function methodOf(init?: RequestInit): string {
-  return (init?.method ?? 'GET').toUpperCase();
+function isRetryable(error: unknown): boolean {
+  return error instanceof HttpError
+    ? error.status === 408 || error.status === 429 || error.status >= 500
+    : error instanceof TypeError || (error instanceof Error && error.name === 'AbortError');
 }
 
-async function requestTextWithRetry(url: string, init?: RequestInit): Promise<string> {
-  let lastError: unknown = null;
-  const method = methodOf(init);
+function safeError(error: unknown): string {
+  if (error instanceof HttpError) return `HTTP ${error.status}`;
+  if (error instanceof Error && error.name === 'AbortError') return 'request timed out';
+  return 'network request failed';
+}
 
-  for (let attempt = 1; attempt <= HTTP_RETRIES; attempt += 1) {
+async function requestText(
+  url: string,
+  init: RequestInit = {},
+  context: RequestContext = {}
+): Promise<string> {
+  const requestId = randomUUID();
+  const method = (init.method ?? 'GET').toUpperCase();
+  const attempts = context.attempts ?? DEFAULT_ATTEMPTS;
+  let lastError: unknown;
+
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
     const startedAt = Date.now();
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), context.timeoutMs ?? DEFAULT_TIMEOUT_MS);
     try {
-      const response = await fetch(url, {
+      const requestInit: RequestInit & { dispatcher?: Agent } = {
         ...init,
-        cache: 'no-store'
-      });
-      const body = await response.text();
-      const durationMs = Date.now() - startedAt;
-
-      if (!response.ok) {
-        console.warn('[http] non-ok response', {
-          method,
-          url,
-          attempt,
-          status: response.status,
-          durationMs,
-          bodyPreview: toPreview(body)
-        });
-        throw new Error(`HTTP ${response.status} for ${url}: ${toPreview(body)}`);
+        cache: 'no-store',
+        signal: controller.signal
+      };
+      if (context.allowSelfSignedTls) {
+        selfSignedAgent ??= new Agent({ connect: { rejectUnauthorized: false } });
+        requestInit.dispatcher = selfSignedAgent;
       }
-
-      console.log('[http] ok response', {
+      const response = await fetch(url, requestInit);
+      if (!response.ok) {
+        throw new HttpError(
+          `HTTP ${response.status}`,
+          response.status,
+          retryAfterMs(response.headers.get('retry-after'))
+        );
+      }
+      const body = await response.text();
+      console.info('[http] request completed', {
+        provider: context.provider ?? 'external',
+        operation: context.operation ?? 'request',
+        requestId,
         method,
-        url,
-        attempt,
         status: response.status,
-        durationMs,
-        bodyPreview: toPreview(body)
+        durationMs: Date.now() - startedAt,
+        attempt
       });
       return body;
     } catch (error) {
       lastError = error;
+      const retryable = isRetryable(error);
       console.warn('[http] request failed', {
+        provider: context.provider ?? 'external',
+        operation: context.operation ?? 'request',
+        requestId,
         method,
-        url,
+        status: error instanceof HttpError ? error.status : undefined,
+        durationMs: Date.now() - startedAt,
         attempt,
-        error: error instanceof Error ? error.message : String(error)
+        retryable,
+        error: safeError(error)
       });
-      if (attempt < HTTP_RETRIES) {
-        const backoffMs = HTTP_BACKOFF_BASE_MS * 2 ** (attempt - 1);
-        console.warn('[http] retry backoff', { method, url, attempt, backoffMs });
-        await sleep(backoffMs);
-      }
+      if (!retryable || attempt === attempts) break;
+      const exponential = BACKOFF_BASE_MS * 2 ** (attempt - 1);
+      const jittered = exponential * (0.75 + Math.random() * 0.5);
+      await sleep(error instanceof HttpError && error.retryAfterMs !== undefined
+        ? error.retryAfterMs
+        : jittered);
+    } finally {
+      clearTimeout(timeout);
     }
   }
 
-  throw lastError instanceof Error ? lastError : new Error(String(lastError));
+  throw lastError instanceof Error ? lastError : new Error('External request failed');
 }
 
-export async function getJson<T>(url: string, init?: RequestInit): Promise<T> {
-  const body = await requestTextWithRetry(url, {
+export async function getJson<T>(
+  url: string,
+  init?: RequestInit,
+  schema?: ZodType<T>,
+  context?: RequestContext
+): Promise<T> {
+  const body = await requestText(url, {
     ...init,
-    headers: {
-      Accept: 'application/json',
-      ...(init?.headers ?? {})
-    }
-  });
+    headers: { Accept: 'application/json', ...(init?.headers ?? {}) }
+  }, context);
+  let parsed: unknown;
   try {
-    return JSON.parse(body) as T;
-  } catch (error) {
-    console.error('[http] json parse failed', {
-      method: methodOf(init),
-      url,
-      error: error instanceof Error ? error.message : String(error),
-      bodyPreview: toPreview(body)
-    });
-    throw error;
+    parsed = JSON.parse(body);
+  } catch {
+    throw new Error('Provider returned invalid JSON');
   }
+  return schema ? schema.parse(parsed) : parsed as T;
 }
 
-export async function getText(url: string, init?: RequestInit): Promise<string> {
-  return requestTextWithRetry(url, init);
+export async function getText(
+  url: string,
+  init?: RequestInit,
+  context?: RequestContext
+): Promise<string> {
+  return requestText(url, init, context);
 }

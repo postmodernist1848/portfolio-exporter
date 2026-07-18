@@ -1,39 +1,77 @@
-import { getLatestSnapshot, getSourceHistory, getTotalHistory, saveSnapshot } from '@/lib/db/portfolio-repository';
-import { collectLiveSnapshot } from '@/lib/sources';
-import type { PortfolioSnapshot } from '@/types/portfolio';
+import {
+  getLatestSnapshots,
+  getSourceHistory,
+  getTotalHistory,
+  type HistoryRange
+} from '@/lib/db/portfolio-repository';
+import { SOURCE_METADATA } from '@/lib/sources/metadata';
+import type {
+  DashboardData,
+  DashboardSnapshot,
+  PortfolioSnapshot,
+  ValueChange
+} from '@/types/portfolio';
 
-export async function collectAndSaveSnapshot(): Promise<PortfolioSnapshot> {
-  const snapshot = await collectLiveSnapshot();
-  await saveSnapshot(snapshot);
-  return snapshot;
+function change(current: number, previous: number | undefined): ValueChange {
+  if (previous === undefined) return null;
+  return {
+    absoluteRub: current - previous,
+    percentage: previous === 0 ? null : ((current - previous) / previous) * 100
+  };
 }
 
-export async function getDashboardData(): Promise<{
-  snapshot: PortfolioSnapshot;
-  totalHistory: { timestamp: string; totalRub: number }[];
-  sourceHistory: Record<string, { timestamp: string; totalRub: number }[]>;
-}> {
-  let snapshot: PortfolioSnapshot;
+function toDashboardSnapshot(
+  latest: PortfolioSnapshot,
+  previous?: PortfolioSnapshot
+): DashboardSnapshot {
+  const staleByAge = Date.now() - Date.parse(latest.capturedAt) > 2 * 60 * 60 * 1000;
+  const allDisabled = latest.components.length > 0 &&
+    latest.components.every((component) => component.status === 'disabled');
+  const previousBySource = new Map(previous?.components.map((item) => [item.sourceId, item]));
+  return {
+    capturedAt: latest.capturedAt,
+    totalRub: latest.totalRub,
+    status: latest.status,
+    freshness: allDisabled ? 'not_configured' : staleByAge ? 'stale' : latest.status,
+    freshSourceCount: latest.freshSourceCount,
+    staleSourceCount: latest.staleSourceCount,
+    errorSourceCount: latest.errorSourceCount,
+    containsStaleValues: latest.components.some((item) => item.status === 'stale'),
+    change: change(latest.totalRub, previous?.totalRub),
+    components: latest.components
+      .sort((a, b) => SOURCE_METADATA[a.sourceId].order - SOURCE_METADATA[b.sourceId].order)
+      .map((component) => ({
+        sourceId: component.sourceId,
+        sourceName: SOURCE_METADATA[component.sourceId].name,
+        totalRub: component.totalRub,
+        observedAt: component.observedAt,
+        status: component.status,
+        message: component.errorMessage,
+        change: change(component.totalRub, previousBySource.get(component.sourceId)?.totalRub)
+      }))
+  };
+}
 
-  try {
-    snapshot = await collectLiveSnapshot({ useCache: true });
-  } catch {
-    const latestSnapshot = await getLatestSnapshot();
-    if (!latestSnapshot) {
-      snapshot = await collectAndSaveSnapshot();
-    } else {
-      snapshot = latestSnapshot;
-    }
+export async function getDashboardData(range: HistoryRange = '7d'): Promise<DashboardData> {
+  const [snapshots, totalHistory] = await Promise.all([
+    getLatestSnapshots(2),
+    getTotalHistory(2000, range)
+  ]);
+  const latest = snapshots[0];
+  if (!latest) {
+    return { snapshot: null, totalHistory: [], sourceHistory: {} };
   }
 
-  const totalHistory = await getTotalHistory();
-  const sourceHistoryEntries = await Promise.all(
-    snapshot.components.map(async (component) => [component.sourceId, await getSourceHistory(component.sourceId)] as const)
-  );
+  const sourceHistory = Object.fromEntries(await Promise.all(
+    latest.components.map(async (component) => [
+      component.sourceId,
+      await getSourceHistory(component.sourceId, 2000, range)
+    ] as const)
+  ));
 
   return {
-    snapshot,
+    snapshot: toDashboardSnapshot(latest, snapshots[1]),
     totalHistory,
-    sourceHistory: Object.fromEntries(sourceHistoryEntries)
+    sourceHistory
   };
 }

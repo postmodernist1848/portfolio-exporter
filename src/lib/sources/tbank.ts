@@ -1,18 +1,14 @@
 import { env } from '@/lib/config/env';
 import { getJson } from '@/lib/services/http';
-import type { SourceSnapshot } from '@/types/portfolio';
-import type { PortfolioSource } from './types';
+import { z } from 'zod';
+import type { PortfolioSource, SourceCollectionResult } from './types';
 
 const TINVEST_GET_PORTFOLIO_URL =
   'https://invest-public-api.tbank.ru/rest/tinkoff.public.invest.api.contract.v1.OperationsService/GetPortfolio';
 const TINVEST_GET_ACCOUNTS_URL =
   'https://invest-public-api.tbank.ru/rest/tinkoff.public.invest.api.contract.v1.UsersService/GetAccounts';
 
-type MoneyValue = {
-  units?: string | number;
-  nano?: number;
-  currency?: string;
-};
+type MoneyValue = { units: string | number; nano: number; currency: string };
 
 type TPortfolioResponse = {
   totalAmountPortfolio?: MoneyValue;
@@ -42,13 +38,9 @@ function logFetchError(scope: string, error: unknown): void {
   console.error(`[${scope}] fetch error`, { error: String(error) });
 }
 
-function moneyToNumber(value: MoneyValue | undefined): number {
-  if (!value) {
-    return 0;
-  }
-
-  const units = typeof value.units === 'string' ? Number(value.units) : (value.units ?? 0);
-  const nano = value.nano ?? 0;
+function moneyToNumber(value: MoneyValue): number {
+  const units = typeof value.units === 'string' ? Number(value.units) : value.units;
+  const nano = value.nano;
   return Number(units) + nano / 1_000_000_000;
 }
 
@@ -60,27 +52,32 @@ export class TBankSource implements PortfolioSource {
   id = 'tbank' as const;
   name = 'Т Инвестиции';
 
-  async fetchSnapshot(): Promise<SourceSnapshot> {
+  async fetchSnapshot(): Promise<SourceCollectionResult> {
     if (!env.TINVEST_API_TOKEN) {
       return {
         sourceId: this.id,
         sourceName: this.name,
         totalRub: 0,
-        capturedAt: new Date().toISOString(),
-        details: { status: 'API не настроен (TINVEST_API_TOKEN)' }
+        status: 'disabled'
       };
     }
 
     let accountsPayload: TAccountsResponse;
     try {
-      accountsPayload = await getJson<TAccountsResponse>(TINVEST_GET_ACCOUNTS_URL, {
+      accountsPayload = await getJson(TINVEST_GET_ACCOUNTS_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${env.TINVEST_API_TOKEN}`
         },
         body: JSON.stringify({ status: 'ACCOUNT_STATUS_OPEN' })
-      });
+      }, z.object({
+        accounts: z.array(z.object({
+          id: z.string().optional(),
+          accountId: z.string().optional(),
+          name: z.string().optional()
+        }))
+      }), { provider: 'tbank', operation: 'accounts' });
     } catch (error) {
       logFetchError('source:tbank:get-accounts', error);
       throw error;
@@ -90,18 +87,12 @@ export class TBankSource implements PortfolioSource {
       return name !== 'кредитка';
     });
 
-    let totalRub = 0;
-    const details: Array<{ accountId: string; name?: string; totalRub: number }> = [];
-
-    for (const account of accounts) {
+    const accountResults = await Promise.allSettled(accounts.map(async (account) => {
       const accountId = account.id ?? account.accountId;
       if (!accountId) {
-        continue;
+        throw new Error('Account ID is missing');
       }
-
-      let payload: TPortfolioResponse;
-      try {
-        payload = await getJson<TPortfolioResponse>(TINVEST_GET_PORTFOLIO_URL, {
+      const payload = await getJson(TINVEST_GET_PORTFOLIO_URL, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -109,25 +100,33 @@ export class TBankSource implements PortfolioSource {
           },
           body: JSON.stringify({
             accountId,
-            currency: env.TINVEST_PORTFOLIO_CURRENCY
+            currency: 'RUB'
           })
-        });
-      } catch (error) {
-        logFetchError('source:tbank:get-portfolio', error);
-        throw error;
+        }, z.object({
+          totalAmountPortfolio: z.object({
+            units: z.union([z.string(), z.number()]),
+            nano: z.number(),
+            currency: z.literal('rub').or(z.literal('RUB'))
+          }),
+          positions: z.array(z.record(z.unknown())).optional()
+        }), { provider: 'tbank', operation: 'portfolio' });
+      const totalRub = moneyToNumber(payload.totalAmountPortfolio);
+      if (!Number.isFinite(totalRub)) {
+        throw new Error('T-Bank returned an invalid RUB total');
       }
-      const accountTotal = toFiniteNumber(moneyToNumber(payload.totalAmountPortfolio));
-      totalRub += accountTotal;
-      details.push({
-        accountId,
-        name: account.name,
-        totalRub: accountTotal
-      });
+      return totalRub;
+    }));
+    const successful = accountResults.filter(
+      (result): result is PromiseFulfilledResult<number> => result.status === 'fulfilled'
+    );
+    if (accounts.length > 0 && successful.length === 0) {
+      throw new Error('All T-Bank accounts failed');
     }
-    totalRub = toFiniteNumber(totalRub);
+    const totalRub = toFiniteNumber(successful.reduce((sum, result) => sum + result.value, 0));
+    const partial = successful.length !== accountResults.length;
     console.log('[source:tbank] snapshot', {
       accountsTotal: accounts.length,
-      usedAccounts: details.length,
+      usedAccounts: successful.length,
       totalRub
     });
 
@@ -135,10 +134,13 @@ export class TBankSource implements PortfolioSource {
       sourceId: this.id,
       sourceName: this.name,
       totalRub,
-      capturedAt: new Date().toISOString(),
+      observedAt: new Date().toISOString(),
+      status: partial ? 'partial' : 'ok',
+      ...(partial ? { errorMessage: 'Часть счетов временно недоступна' } : {}),
       details: {
-        accounts: details
+        accountsTotal: accounts.length,
+        successfulAccounts: successful.length
       }
-    };
+    } as SourceCollectionResult;
   }
 }

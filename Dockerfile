@@ -1,8 +1,8 @@
 FROM node:20-alpine AS deps
 WORKDIR /app
 RUN apk add --no-cache openssl
-COPY package.json ./
-RUN npm install
+COPY package.json package-lock.json ./
+RUN npm ci
 
 FROM node:20-alpine AS builder
 WORKDIR /app
@@ -14,7 +14,7 @@ RUN npx prisma generate && npm run build
 FROM node:20-alpine AS migrator
 WORKDIR /app
 RUN apk add --no-cache openssl
-COPY package.json ./
+COPY package.json package-lock.json ./
 COPY --from=deps /app/node_modules ./node_modules
 COPY prisma ./prisma
 CMD ["npx", "prisma", "db", "push", "--skip-generate"]
