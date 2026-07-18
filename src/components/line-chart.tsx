@@ -19,6 +19,7 @@ export function PortfolioLineChart({ data, color = '#2c6e62' }: Props) {
   }
   const prepared = data.map((point) => ({
     ...point,
+    timestampMs: Date.parse(point.timestamp),
     label: formatMoscowChartLabel(point.timestamp),
     fullLabel: formatMoscowDateTime(point.timestamp)
   }));
@@ -31,7 +32,15 @@ export function PortfolioLineChart({ data, color = '#2c6e62' }: Props) {
       <ResponsiveContainer width="100%" height={240}>
         <LineChart data={prepared}>
           <CartesianGrid strokeDasharray="2 4" stroke="#d9dfdd" />
-          <XAxis dataKey="label" minTickGap={40} tick={{ fontSize: 12, fill: '#3f4946' }} />
+          <XAxis
+            dataKey="timestampMs"
+            type="number"
+            scale="time"
+            domain={['dataMin', 'dataMax']}
+            minTickGap={40}
+            tickFormatter={(value: number) => formatMoscowChartLabel(new Date(value).toISOString())}
+            tick={{ fontSize: 12, fill: '#3f4946' }}
+          />
           <YAxis tickFormatter={(value) => `${compact.format(value)} ₽`} tick={{ fontSize: 12, fill: '#3f4946' }} width={78} />
           <Tooltip
             labelFormatter={(_, payload) => payload?.[0]?.payload?.fullLabel ?? ''}
