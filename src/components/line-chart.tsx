@@ -1,6 +1,7 @@
 'use client';
 
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { formatMoscowChartLabel, formatMoscowDateTime } from '@/lib/format/date';
 
 type Point = { timestamp: string; totalRub: number };
 type Props = { data: Point[]; color?: string };
@@ -18,10 +19,8 @@ export function PortfolioLineChart({ data, color = '#2c6e62' }: Props) {
   }
   const prepared = data.map((point) => ({
     ...point,
-    label: new Date(point.timestamp).toLocaleString('ru-RU', {
-      day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
-    }),
-    fullLabel: new Date(point.timestamp).toLocaleString('ru-RU')
+    label: formatMoscowChartLabel(point.timestamp),
+    fullLabel: formatMoscowDateTime(point.timestamp)
   }));
   const values = data.map((point) => point.totalRub);
   const summary = `Последнее значение ${rub.format(values.at(-1) ?? 0)}, минимум ${rub.format(Math.min(...values))}, максимум ${rub.format(Math.max(...values))}.`;

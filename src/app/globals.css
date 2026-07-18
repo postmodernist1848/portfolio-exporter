@@ -79,12 +79,59 @@ h1, h2, h3, p {
 .total-card, .source-grid, .chart-card { margin-bottom: 16px; }
 .card-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .source-value { font-size: 1.55rem; }
+.info-tooltip {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: 17px;
+  height: 17px;
+  border: 1px solid var(--muted);
+  border-radius: 50%;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: help;
+}
+.info-tooltip::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  z-index: 10;
+  left: 50%;
+  bottom: calc(100% + 8px);
+  width: 230px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--text);
+  color: white;
+  font-size: .78rem;
+  font-weight: 400;
+  line-height: 1.35;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateX(-50%) translateY(3px);
+  transition: opacity .15s ease, transform .15s ease;
+  pointer-events: none;
+}
+.info-tooltip:hover::after,
+.info-tooltip:focus::after {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+}
 .badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   border-radius: 999px;
   padding: 4px 9px;
   font-size: 0.75rem;
   font-weight: 700;
   background: #edf1ef;
+}
+.badge .info-tooltip {
+  width: 15px;
+  height: 15px;
+  border-color: currentColor;
+  font-size: 10px;
 }
 .badge.complete, .badge.ok { color: #226052; background: #e4f0ec; }
 .badge.partial, .badge.stale { color: #7b520f; background: #fff1d7; }

@@ -47,6 +47,7 @@ function toDashboardSnapshot(
         observedAt: component.observedAt,
         status: component.status,
         message: component.errorMessage,
+        infoMessage: SOURCE_METADATA[component.sourceId].infoMessage,
         change: change(component.totalRub, previousBySource.get(component.sourceId)?.totalRub)
       }))
   };

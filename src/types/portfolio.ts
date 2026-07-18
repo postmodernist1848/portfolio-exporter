@@ -35,6 +35,7 @@ export type ValueChange = {
 
 export type DashboardSource = Omit<SourceSnapshot, 'details' | 'capturedAt' | 'errorMessage'> & {
   message?: string;
+  infoMessage?: string;
   change: ValueChange;
 };
 

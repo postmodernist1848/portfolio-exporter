@@ -5,6 +5,7 @@ import { getDashboardData } from '@/lib/services/portfolio-service';
 import { SOURCE_METADATA } from '@/lib/sources/metadata';
 import type { HistoryRange } from '@/lib/db/portfolio-repository';
 import type { SourceStatus, ValueChange } from '@/types/portfolio';
+import { formatMoscowDateTime } from '@/lib/format/date';
 
 export const dynamic = 'force-dynamic';
 
@@ -83,7 +84,7 @@ export default async function HomePage({
           <p className="muted">Portfolio Exporter</p>
           <h1>Стоимость портфеля</h1>
           <p className="muted updated-at">
-            Обновлено {new Date(snapshot.capturedAt).toLocaleString('ru-RU')} · {ageLabel(snapshot.capturedAt)}
+            Обновлено {formatMoscowDateTime(snapshot.capturedAt)} · {ageLabel(snapshot.capturedAt)}
           </p>
         </div>
         <RefreshControl />
@@ -106,12 +107,24 @@ export default async function HomePage({
           <article className={`card source-card status-${component.status}`} key={component.sourceId}>
             <div className="card-heading">
               <p className="muted">{component.sourceName}</p>
-              <span className={`badge ${component.status}`}>{statusLabels[component.status]}</span>
+              <span className={`badge ${component.status}`}>
+                {statusLabels[component.status]}
+                {component.infoMessage && (
+                  <span
+                    className="info-tooltip"
+                    tabIndex={0}
+                    aria-label={component.infoMessage}
+                    data-tooltip={component.infoMessage}
+                  >
+                    i
+                  </span>
+                )}
+              </span>
             </div>
             <p className="value source-value">{currency.format(component.totalRub)}</p>
             <Change value={component.change} />
             {component.status !== 'disabled' && (
-              <p className="observation">Данные: {new Date(component.observedAt).toLocaleString('ru-RU')}</p>
+              <p className="observation">Данные: {formatMoscowDateTime(component.observedAt)}</p>
             )}
             {component.message && <p className="warning">{component.message}</p>}
           </article>

@@ -2,11 +2,16 @@ import type { PortfolioSourceId } from '@/types/portfolio';
 
 export const SOURCE_METADATA: Record<
   PortfolioSourceId,
-  { name: string; color: string; order: number }
+  { name: string; color: string; order: number; infoMessage?: string }
 > = {
   crypto: { name: 'Крипто-портфель', color: '#2c6e62', order: 10 },
   bcs: { name: 'БКС Мир Инвестиций', color: '#3e7cb1', order: 20 },
-  tbank: { name: 'Т Инвестиции', color: '#8a6d3b', order: 30 },
+  tbank: {
+    name: 'Т Инвестиции',
+    color: '#8a6d3b',
+    order: 30,
+    infoMessage: 'Счёт «Кредитка» намеренно исключён из расчёта.'
+  },
   okx: { name: 'OKX', color: '#6b46c1', order: 40 }
 };
 

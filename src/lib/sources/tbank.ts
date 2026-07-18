@@ -12,6 +12,7 @@ type MoneyValue = { units: string | number; nano: number; currency: string };
 
 type TPortfolioResponse = {
   totalAmountPortfolio?: MoneyValue;
+  totalAmountDfa?: MoneyValue;
   positions?: Array<Record<string, unknown>>;
 };
 
@@ -19,6 +20,7 @@ type TAccount = {
   id?: string;
   accountId?: string;
   name?: string;
+  type?: string;
 };
 
 type TAccountsResponse = {
@@ -42,6 +44,23 @@ function moneyToNumber(value: MoneyValue): number {
   const units = typeof value.units === 'string' ? Number(value.units) : value.units;
   const nano = value.nano;
   return Number(units) + nano / 1_000_000_000;
+}
+
+export function selectPortfolioTotalRub(
+  payload: TPortfolioResponse,
+  accountType?: string
+): number {
+  const money = accountType === 'ACCOUNT_TYPE_DFA'
+    ? payload.totalAmountDfa ?? payload.totalAmountPortfolio
+    : payload.totalAmountPortfolio;
+  if (!money) {
+    throw new Error(
+      accountType === 'ACCOUNT_TYPE_DFA'
+        ? 'T-Bank DFA response has no RUB total'
+        : 'T-Bank portfolio response has no RUB total'
+    );
+  }
+  return moneyToNumber(money);
 }
 
 function toFiniteNumber(value: number): number {
@@ -75,7 +94,8 @@ export class TBankSource implements PortfolioSource {
         accounts: z.array(z.object({
           id: z.string().optional(),
           accountId: z.string().optional(),
-          name: z.string().optional()
+          name: z.string().optional(),
+          type: z.string().optional()
         }))
       }), {
         provider: 'tbank',
@@ -86,9 +106,16 @@ export class TBankSource implements PortfolioSource {
       logFetchError('source:tbank:get-accounts', error);
       throw error;
     }
-    const accounts = (accountsPayload.accounts ?? []).filter((account) => {
+    const allAccounts = accountsPayload.accounts ?? [];
+    const accounts = allAccounts.filter((account) => {
       const name = (account.name ?? '').trim().toLowerCase();
       return name !== 'кредитка';
+    });
+    const excludedCreditAccounts = allAccounts.length - accounts.length;
+    console.info('[source:tbank] accounts selected', {
+      openAccounts: allAccounts.length,
+      portfolioAccounts: accounts.length,
+      excludedCreditAccounts
     });
 
     const accountResults = await Promise.allSettled(accounts.map(async (account) => {
@@ -111,14 +138,19 @@ export class TBankSource implements PortfolioSource {
             units: z.union([z.string(), z.number()]),
             nano: z.number(),
             currency: z.literal('rub').or(z.literal('RUB'))
-          }),
+          }).optional(),
+          totalAmountDfa: z.object({
+            units: z.union([z.string(), z.number()]),
+            nano: z.number(),
+            currency: z.literal('rub').or(z.literal('RUB'))
+          }).optional(),
           positions: z.array(z.record(z.unknown())).optional()
         }), {
           provider: 'tbank',
           operation: 'portfolio',
           allowSelfSignedTls: env.TINVEST_ALLOW_SELF_SIGNED_TLS
         });
-      const totalRub = moneyToNumber(payload.totalAmountPortfolio);
+      const totalRub = selectPortfolioTotalRub(payload, account.type);
       if (!Number.isFinite(totalRub)) {
         throw new Error('T-Bank returned an invalid RUB total');
       }
@@ -127,6 +159,27 @@ export class TBankSource implements PortfolioSource {
     const successful = accountResults.filter(
       (result): result is PromiseFulfilledResult<number> => result.status === 'fulfilled'
     );
+    const failedAccounts = accountResults.flatMap((result, index) => {
+      if (result.status === 'fulfilled') {
+        return [];
+      }
+      const account = accounts[index];
+      const reason = (() => {
+        const message = result.reason instanceof Error ? result.reason.message : '';
+        return /^HTTP \d+$/.test(message) ? message : 'invalid or unavailable portfolio response';
+      })();
+      return [{
+        accountName: account?.name?.trim() || 'Без названия',
+        accountType: account?.type ?? 'неизвестен',
+        reason
+      }];
+    });
+    if (failedAccounts.length > 0) {
+      console.warn('[source:tbank] some accounts failed', {
+        failedAccounts: failedAccounts.length,
+        accounts: failedAccounts
+      });
+    }
     if (accounts.length > 0 && successful.length === 0) {
       throw new Error('All T-Bank accounts failed');
     }
@@ -147,7 +200,8 @@ export class TBankSource implements PortfolioSource {
       ...(partial ? { errorMessage: 'Часть счетов временно недоступна' } : {}),
       details: {
         accountsTotal: accounts.length,
-        successfulAccounts: successful.length
+        successfulAccounts: successful.length,
+        excludedCreditAccounts
       }
     } as SourceCollectionResult;
   }
