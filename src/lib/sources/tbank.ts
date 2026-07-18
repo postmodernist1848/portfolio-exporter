@@ -77,7 +77,11 @@ export class TBankSource implements PortfolioSource {
           accountId: z.string().optional(),
           name: z.string().optional()
         }))
-      }), { provider: 'tbank', operation: 'accounts' });
+      }), {
+        provider: 'tbank',
+        operation: 'accounts',
+        allowSelfSignedTls: env.TINVEST_ALLOW_SELF_SIGNED_TLS
+      });
     } catch (error) {
       logFetchError('source:tbank:get-accounts', error);
       throw error;
@@ -109,7 +113,11 @@ export class TBankSource implements PortfolioSource {
             currency: z.literal('rub').or(z.literal('RUB'))
           }),
           positions: z.array(z.record(z.unknown())).optional()
-        }), { provider: 'tbank', operation: 'portfolio' });
+        }), {
+          provider: 'tbank',
+          operation: 'portfolio',
+          allowSelfSignedTls: env.TINVEST_ALLOW_SELF_SIGNED_TLS
+        });
       const totalRub = moneyToNumber(payload.totalAmountPortfolio);
       if (!Number.isFinite(totalRub)) {
         throw new Error('T-Bank returned an invalid RUB total');

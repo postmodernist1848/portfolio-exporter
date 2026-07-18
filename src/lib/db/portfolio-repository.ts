@@ -67,32 +67,38 @@ function mapSnapshot(row: SnapshotRow): PortfolioSnapshot {
 }
 
 export async function saveSnapshot(snapshot: PortfolioSnapshot): Promise<void> {
-  const data = {
+  const components = snapshot.components.map((component) => ({
+    sourceId: component.sourceId,
+    sourceName: component.sourceName,
+    totalRub: component.totalRub,
+    status: component.status,
+    observedAt: new Date(component.observedAt),
+    errorMessage: component.errorMessage,
+    details: toPrismaJson(component.details)
+  }));
+  const snapshotData = {
     totalRub: snapshot.totalRub,
     status: snapshot.status,
     freshSourceCount: snapshot.freshSourceCount,
     staleSourceCount: snapshot.staleSourceCount,
-    errorSourceCount: snapshot.errorSourceCount,
-    components: {
-      deleteMany: {},
-      create: snapshot.components.map((component) => ({
-        sourceId: component.sourceId,
-        sourceName: component.sourceName,
-        totalRub: component.totalRub,
-        status: component.status,
-        observedAt: new Date(component.observedAt),
-        errorMessage: component.errorMessage,
-        details: toPrismaJson(component.details)
-      }))
-    }
+    errorSourceCount: snapshot.errorSourceCount
   };
 
   await prisma.portfolioSnapshot.upsert({
     where: { capturedAt: new Date(snapshot.capturedAt) },
-    update: data,
+    update: {
+      ...snapshotData,
+      components: {
+        deleteMany: {},
+        create: components
+      }
+    },
     create: {
       capturedAt: new Date(snapshot.capturedAt),
-      ...data
+      ...snapshotData,
+      components: {
+        create: components
+      }
     }
   });
 }
