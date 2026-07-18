@@ -3,7 +3,7 @@ DEPLOY_DIR ?= portfolio-exporter
 DEPLOY_BRANCH ?= master
 DEPLOY_IMAGE_ARCHIVE ?= /tmp/portfolio-exporter-images.tar.gz
 
-.PHONY: deploy deploy-build-remote deploy-logs deploy-status
+.PHONY: deploy deploy-build-remote logs status
 
 deploy:
 	docker build -t portfolio-exporter-app:latest .
@@ -16,8 +16,8 @@ deploy:
 deploy-build-remote:
 	ssh $(DEPLOY_HOST) 'set -e; cd $(DEPLOY_DIR); git fetch origin $(DEPLOY_BRANCH); git reset --hard origin/$(DEPLOY_BRANCH); docker compose up --build -d'
 
-deploy-logs:
+logs:
 	ssh $(DEPLOY_HOST) 'cd $(DEPLOY_DIR); docker compose logs -f app'
 
-deploy-status:
+status:
 	ssh $(DEPLOY_HOST) 'cd $(DEPLOY_DIR); docker compose ps'

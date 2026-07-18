@@ -70,8 +70,8 @@ make deploy-build-remote
 Проверка:
 
 ```bash
-make deploy-status
-make deploy-logs
+make status
+make logs
 ```
 
 ## Реальные API интеграции
