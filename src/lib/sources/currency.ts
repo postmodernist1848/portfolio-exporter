@@ -1,33 +1,73 @@
 import { z } from 'zod';
 import { getJson } from '@/lib/services/http';
 
+const coinPriceSchema = z.object({
+  rub: z.number().positive(),
+  usd: z.number().positive(),
+  last_updated_at: z.number().int().positive()
+});
 const responseSchema = z.object({
-  Valute: z.object({
-    USD: z.object({ Value: z.number().positive() })
-  })
+  bitcoin: coinPriceSchema,
+  solana: coinPriceSchema
 });
 
-const CACHE_TTL_MS = 60 * 60 * 1000;
-let lastKnownGood: { rate: number; fetchedAt: number } | null = null;
+export type CryptoMarketPrices = {
+  bitcoinRub: number;
+  solanaRub: number;
+  usdRubRate: number;
+  stale: boolean;
+  observedAt: number;
+};
 
-export async function fetchUsdRubRate(): Promise<{ rate: number; stale: boolean }> {
-  if (lastKnownGood && Date.now() - lastKnownGood.fetchedAt < CACHE_TTL_MS) {
-    return { rate: lastKnownGood.rate, stale: false };
+const PRICE_URL =
+  'https://api.coingecko.com/api/v3/simple/price'
+  + '?ids=bitcoin,solana'
+  + '&vs_currencies=rub,usd'
+  + '&include_last_updated_at=true';
+const CACHE_TTL_MS = 60 * 1000;
+const MAX_PROVIDER_AGE_MS = 15 * 60 * 1000;
+let lastKnownGood: CryptoMarketPrices | null = null;
+let fetchedAt = 0;
+
+export function buildCryptoMarketPrices(
+  response: z.infer<typeof responseSchema>,
+  now = Date.now()
+): CryptoMarketPrices {
+  const observedAt = Math.min(
+    response.bitcoin.last_updated_at,
+    response.solana.last_updated_at
+  ) * 1000;
+  if (now - observedAt > MAX_PROVIDER_AGE_MS) {
+    throw new Error('CoinGecko prices are stale');
+  }
+  return {
+    bitcoinRub: response.bitcoin.rub,
+    solanaRub: response.solana.rub,
+    usdRubRate: response.bitcoin.rub / response.bitcoin.usd,
+    stale: false,
+    observedAt
+  };
+}
+
+export async function fetchCryptoMarketPrices(): Promise<CryptoMarketPrices> {
+  if (lastKnownGood && Date.now() - fetchedAt < CACHE_TTL_MS) {
+    return lastKnownGood;
   }
 
   try {
     const response = await getJson(
-      'https://www.cbr-xml-daily.ru/daily_json.js',
+      PRICE_URL,
       undefined,
       responseSchema,
-      { provider: 'cbr', operation: 'usd-rub-rate' }
+      { provider: 'coingecko', operation: 'crypto-rub-prices' }
     );
-    lastKnownGood = { rate: response.Valute.USD.Value, fetchedAt: Date.now() };
-    return { rate: lastKnownGood.rate, stale: false };
+    lastKnownGood = buildCryptoMarketPrices(response);
+    fetchedAt = Date.now();
+    return lastKnownGood;
   } catch (error) {
     if (lastKnownGood) {
-      console.warn('[currency] using last-known-good USD/RUB rate');
-      return { rate: lastKnownGood.rate, stale: true };
+      console.warn('[currency] using last-known-good CoinGecko price snapshot');
+      return { ...lastKnownGood, stale: true };
     }
     throw error;
   }

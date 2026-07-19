@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { getJson } from '@/lib/services/http';
-import { fetchUsdRubRate } from './currency';
+import type { CryptoMarketPrices } from './currency';
 import type { CryptoBreakdown } from '@/types/portfolio';
 
 const INFO_URL = 'https://api.hyperliquid.xyz/info';
@@ -168,16 +168,16 @@ async function fetchAccount(
 
 export async function fetchHyperliquidBreakdown(
   wallets: string[],
-  ratePromise: ReturnType<typeof fetchUsdRubRate>
+  pricesPromise: Promise<CryptoMarketPrices>
 ): Promise<{
   totalRub: number;
   staleRate: boolean;
   incomplete: boolean;
   breakdown: NonNullable<CryptoBreakdown['hyperliquid']>;
 }> {
-  const [spotMetadata, rate] = await Promise.all([
+  const [spotMetadata, prices] = await Promise.all([
     info('spotMetaAndAssetCtxs', spotMetaAndContextsSchema),
-    ratePromise
+    pricesPromise
   ]);
   const [meta] = spotMetadata;
   const markets = buildSpotMarkets(spotMetadata);
@@ -195,16 +195,16 @@ export async function fetchHyperliquidBreakdown(
       ))
     ]);
     const totalUsd = accounts.reduce((sum, account) => sum + account.totalUsd, 0);
-    return { address, accounts, totalUsd, totalRub: totalUsd * rate.rate };
+    return { address, accounts, totalUsd, totalRub: totalUsd * prices.usdRubRate };
   }));
 
   return {
     totalRub: rows.reduce((sum, row) => sum + row.totalRub, 0),
-    staleRate: rate.stale,
+    staleRate: prices.stale,
     incomplete: false,
     breakdown: {
-      usdRubRate: rate.rate,
-      rateStale: rate.stale,
+      usdRubRate: prices.usdRubRate,
+      rateStale: prices.stale,
       wallets: rows
     }
   };

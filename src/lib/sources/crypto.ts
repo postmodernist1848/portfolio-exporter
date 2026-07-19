@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { env } from '@/lib/config/env';
 import { getJson } from '@/lib/services/http';
-import { fetchUsdRubRate } from './currency';
+import { fetchCryptoMarketPrices } from './currency';
 import { fetchHyperliquidBreakdown } from './hyperliquid';
 import type { PortfolioSource, SourceCollectionResult } from './types';
 import type { CryptoBreakdown } from '@/types/portfolio';
@@ -39,10 +39,6 @@ const solTokensSchema = z.object({
   }),
   error: z.never().optional()
 });
-const pricesSchema = z.object({
-  bitcoin: z.object({ rub: z.number().nonnegative() }),
-  solana: z.object({ rub: z.number().nonnegative() })
-});
 const moralisSchema = z.object({
   total_networth_usd: z.union([z.string(), z.number()]).transform(Number).pipe(z.number().finite()),
   chains: z.array(z.object({
@@ -71,7 +67,7 @@ export function buildMoralisNetWorthUrl(address: string): string {
 
 async function fetchBtcBreakdown(
   wallets: string[],
-  pricesPromise: ReturnType<typeof fetchPrices>
+  pricesPromise: ReturnType<typeof fetchCryptoMarketPrices>
 ): Promise<{ totalRub: number; breakdown: NonNullable<CryptoBreakdown['btc']> }> {
   const [balances, prices] = await Promise.all([
     Promise.all(wallets.map((address) => getJson(
@@ -87,22 +83,13 @@ async function fetchBtcBreakdown(
     return {
       address: wallets[index],
       balanceBtc,
-      totalRub: balanceBtc * prices.bitcoin.rub
+      totalRub: balanceBtc * prices.bitcoinRub
     };
   });
   return {
     totalRub: rows.reduce((sum, row) => sum + row.totalRub, 0),
-    breakdown: { priceRub: prices.bitcoin.rub, wallets: rows }
+    breakdown: { priceRub: prices.bitcoinRub, wallets: rows }
   };
-}
-
-async function fetchPrices() {
-  return getJson(
-    'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,solana&vs_currencies=rub',
-    undefined,
-    pricesSchema,
-    { provider: 'coingecko', operation: 'rub-prices' }
-  );
 }
 
 function rpcBody(method: string, params: unknown[]) {
@@ -115,14 +102,13 @@ function rpcBody(method: string, params: unknown[]) {
 
 async function fetchSolanaBreakdown(
   wallets: string[],
-  pricesPromise: ReturnType<typeof fetchPrices>,
-  ratePromise: ReturnType<typeof fetchUsdRubRate>
+  pricesPromise: ReturnType<typeof fetchCryptoMarketPrices>
 ): Promise<{
   totalRub: number;
   staleRate: boolean;
   breakdown: NonNullable<CryptoBreakdown['solana']>;
 }> {
-  const [balances, tokenResponses, prices, rate] = await Promise.all([
+  const [balances, tokenResponses, prices] = await Promise.all([
     Promise.all(wallets.map((address) => getJson(
       env.SOLANA_RPC_URL ?? DEFAULT_SOLANA_RPC_URL,
       rpcBody('getBalance', [address]),
@@ -139,8 +125,7 @@ async function fetchSolanaBreakdown(
       solTokensSchema,
       { provider: 'solana', operation: 'usdc-balances' }
     ))),
-    pricesPromise,
-    ratePromise
+    pricesPromise
   ]);
   const rows = wallets.map((address, index) => {
     const balanceSol = balances[index].result.value / 1e9;
@@ -148,8 +133,8 @@ async function fetchSolanaBreakdown(
       const token = item.account.data.parsed.info.tokenAmount;
       return sum + Number(token.amount) / 10 ** token.decimals;
     }, 0);
-    const solRub = balanceSol * prices.solana.rub;
-    const usdcRub = balanceUsdc * rate.rate;
+    const solRub = balanceSol * prices.solanaRub;
+    const usdcRub = balanceUsdc * prices.usdRubRate;
     return {
       address,
       balanceSol,
@@ -161,11 +146,11 @@ async function fetchSolanaBreakdown(
   });
   return {
     totalRub: rows.reduce((sum, row) => sum + row.totalRub, 0),
-    staleRate: rate.stale,
+    staleRate: prices.stale,
     breakdown: {
-      solPriceRub: prices.solana.rub,
-      usdRubRate: rate.rate,
-      rateStale: rate.stale,
+      solPriceRub: prices.solanaRub,
+      usdRubRate: prices.usdRubRate,
+      rateStale: prices.stale,
       wallets: rows
     }
   };
@@ -173,28 +158,28 @@ async function fetchSolanaBreakdown(
 
 async function fetchEvmBreakdown(
   wallets: string[],
-  ratePromise: ReturnType<typeof fetchUsdRubRate>
+  pricesPromise: ReturnType<typeof fetchCryptoMarketPrices>
 ): Promise<{
   totalRub: number;
   staleRate: boolean;
   breakdown: NonNullable<CryptoBreakdown['evm']>;
 }> {
   if (!env.MORALIS_API_KEY) throw new Error('EVM provider is not configured');
-  const [values, rate] = await Promise.all([
+  const [values, prices] = await Promise.all([
     Promise.all(wallets.map((address) => getJson(
       buildMoralisNetWorthUrl(address),
       { headers: { 'X-API-Key': env.MORALIS_API_KEY! } },
       moralisSchema,
       { provider: 'moralis', operation: 'evm-net-worth' }
     ))),
-    ratePromise
+    pricesPromise
   ]);
   const rows = values.map((value, index) => {
     const totalUsd = Number(value.total_networth_usd);
     return {
       address: wallets[index],
       totalUsd,
-      totalRub: totalUsd * rate.rate,
+      totalRub: totalUsd * prices.usdRubRate,
       chains: value.chains.map((chain) => ({
         chain: chain.chain,
         totalUsd: Number(chain.networth_usd)
@@ -205,10 +190,10 @@ async function fetchEvmBreakdown(
   });
   return {
     totalRub: rows.reduce((sum, row) => sum + row.totalRub, 0),
-    staleRate: rate.stale,
+    staleRate: prices.stale,
     breakdown: {
-      usdRubRate: rate.rate,
-      rateStale: rate.stale,
+      usdRubRate: prices.usdRubRate,
+      rateStale: prices.stale,
       wallets: rows
     }
   };
@@ -230,8 +215,7 @@ export class CryptoSource implements PortfolioSource {
       return { sourceId: this.id, sourceName: this.name, totalRub: 0, status: 'disabled' };
     }
 
-    const pricesPromise = btc.length || sol.length ? fetchPrices() : null;
-    const ratePromise = evm.length || sol.length || hyperliquid.length ? fetchUsdRubRate() : null;
+    const pricesPromise = fetchCryptoMarketPrices();
     const tasks: Array<{
       key: 'btc' | 'evm' | 'solana' | 'hyperliquid';
       promise: Promise<{
@@ -249,16 +233,16 @@ export class CryptoSource implements PortfolioSource {
     if (btc.length && pricesPromise) {
       tasks.push({ key: 'btc', promise: fetchBtcBreakdown(btc, pricesPromise) });
     }
-    if (evm.length && ratePromise) {
-      tasks.push({ key: 'evm', promise: fetchEvmBreakdown(evm, ratePromise) });
+    if (evm.length) {
+      tasks.push({ key: 'evm', promise: fetchEvmBreakdown(evm, pricesPromise) });
     }
-    if (sol.length && pricesPromise && ratePromise) {
-      tasks.push({ key: 'solana', promise: fetchSolanaBreakdown(sol, pricesPromise, ratePromise) });
+    if (sol.length) {
+      tasks.push({ key: 'solana', promise: fetchSolanaBreakdown(sol, pricesPromise) });
     }
-    if (hyperliquid.length && ratePromise) {
+    if (hyperliquid.length) {
       tasks.push({
         key: 'hyperliquid',
-        promise: fetchHyperliquidBreakdown(hyperliquid, ratePromise)
+        promise: fetchHyperliquidBreakdown(hyperliquid, pricesPromise)
       });
     }
     const settled = await Promise.allSettled(tasks.map((task) => task.promise));

@@ -103,8 +103,8 @@ function CryptoDetails({ breakdown }: { breakdown: Extract<SourceBreakdown, { ki
             </table>
           </div>
           <p className="breakdown-note">
-            Цена SOL — CoinGecko, конвертация USDC — курс USD/RUB ЦБ РФ
-            {breakdown.solana.rateStale ? ' (использован последний известный курс)' : ''}.
+            Цена SOL — CoinGecko. USDC конвертируется по implied USD/RUB: {number.format(breakdown.solana.usdRubRate)}
+            {breakdown.solana.rateStale ? ' (использован последний известный снимок цен)' : ''}.
           </p>
         </section>
       )}

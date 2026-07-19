@@ -73,7 +73,13 @@ describe('Hyperliquid portfolio valuation', () => {
 
     const result = await fetchHyperliquidBreakdown(
       ['0x0000000000000000000000000000000000000001'],
-      Promise.resolve({ rate: 90, stale: false })
+      Promise.resolve({
+        bitcoinRub: 9_000_000,
+        solanaRub: 15_000,
+        usdRubRate: 90,
+        stale: false,
+        observedAt: Date.now()
+      })
     );
 
     expect(result.breakdown.wallets[0].accounts[0]).toMatchObject({
@@ -93,7 +99,13 @@ describe('Hyperliquid portfolio valuation', () => {
 
     const result = await fetchHyperliquidBreakdown(
       ['0x0000000000000000000000000000000000000001'],
-      Promise.resolve({ rate: 90, stale: false })
+      Promise.resolve({
+        bitcoinRub: 9_000_000,
+        solanaRub: 15_000,
+        usdRubRate: 90,
+        stale: false,
+        observedAt: Date.now()
+      })
     );
 
     expect(result.breakdown.wallets[0].accounts[0].perpetualsUsd).toBe(0);
