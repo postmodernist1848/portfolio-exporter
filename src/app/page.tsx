@@ -98,6 +98,32 @@ export default async function HomePage({
         </div>
         <p className="value">{currency.format(snapshot.totalRub)}</p>
         <Change value={snapshot.change} />
+        <ul className="total-breakdown" aria-label="Состав общей стоимости по источникам">
+          {snapshot.components.map((component) => {
+            const percentage = snapshot.totalRub === 0
+              ? null
+              : component.totalRub / snapshot.totalRub * 100;
+            return (
+              <li
+                className={component.status === 'disabled' ? 'disabled' : ''}
+                key={component.sourceId}
+              >
+                <span
+                  className="source-color"
+                  style={{ backgroundColor: SOURCE_METADATA[component.sourceId].color }}
+                  aria-hidden="true"
+                />
+                <span className="total-breakdown-name">{component.sourceName}</span>
+                <strong>{currency.format(component.totalRub)}</strong>
+                <span className="total-breakdown-share">
+                  {component.status === 'disabled'
+                    ? 'не настроено'
+                    : percentage === null ? '—' : `${percentage.toFixed(1)}%`}
+                </span>
+              </li>
+            );
+          })}
+        </ul>
         {snapshot.containsStaleValues && (
           <p className="warning">Итог содержит последние известные значения недоступных источников.</p>
         )}
