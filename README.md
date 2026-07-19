@@ -124,8 +124,6 @@ make logs
 - `MORALIS_API_KEY` требуется только для EVM-адресов; BTC и Solana работают без него.
 - EVM-адреса из `EVM_ADDRESSES` считаются через Moralis Wallet Net Worth API
   одновременно по сетям Ethereum и Arbitrum (native assets + токены).
-- `ETH_ADDRESSES` временно поддерживается как fallback для миграции, но новые
-  конфигурации должны использовать `EVM_ADDRESSES`.
 - BTC считается отдельно on-chain.
 - Solana считается как native SOL и SPL USDC через Solana JSON-RPC и цену SOL/RUB.
 - Каждый адрес из `EVM_ADDRESSES` также проверяется через публичный официальный

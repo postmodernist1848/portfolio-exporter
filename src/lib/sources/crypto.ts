@@ -221,10 +221,7 @@ export class CryptoSource implements PortfolioSource {
   async fetchSnapshot(): Promise<SourceCollectionResult> {
     const observedAt = new Date().toISOString();
     const btc = addresses(env.BTC_ADDRESSES);
-    const evm = addresses(env.EVM_ADDRESSES ?? env.ETH_ADDRESSES);
-    if (!env.EVM_ADDRESSES && env.ETH_ADDRESSES) {
-      console.warn('[source:crypto] ETH_ADDRESSES is deprecated; rename it to EVM_ADDRESSES');
-    }
+    const evm = addresses(env.EVM_ADDRESSES);
     const sol = addresses(env.SOL_ADDRESSES);
     const hyperliquid = evm;
     const configured = Number(Boolean(btc.length)) + Number(Boolean(evm.length))
