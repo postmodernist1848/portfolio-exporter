@@ -208,7 +208,7 @@ export class CryptoSource implements PortfolioSource {
     const btc = addresses(env.BTC_ADDRESSES);
     const evm = addresses(env.EVM_ADDRESSES);
     const sol = addresses(env.SOL_ADDRESSES);
-    const hyperliquid = evm;
+    const hyperliquid = addresses(env.HYPERLIQUID_ADDRESSES);
     const configured = Number(Boolean(btc.length)) + Number(Boolean(evm.length))
       + Number(Boolean(sol.length)) + Number(Boolean(hyperliquid.length));
     if (!configured) {
