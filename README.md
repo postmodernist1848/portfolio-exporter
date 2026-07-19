@@ -81,64 +81,79 @@ make status
 make logs
 ```
 
-## Реальные API интеграции
+## API-интеграции
+
+Все внешние запросы выполняются только во время сбора snapshot. Загрузка страницы и
+`GET /api/portfolio` читают уже сохранённые данные из PostgreSQL.
 
 ### БКС Мир Инвестиций
 
-- Авторизация: `POST https://be.broker.ru/trade-api-keycloak/realms/tradeapi/protocol/openid-connect/token`
-- Портфель: `GET https://be.broker.ru/trade-api-bff-portfolio/api/v1/portfolio`
-- Нужны переменные:
-  - `BCS_REFRESH_TOKEN` (из кабинета БКС)
-  - `BCS_CLIENT_ID` (`trade-api-read` или `trade-api-write`, обычно `trade-api-read`)
+| Назначение | Endpoint | Использование |
+| --- | --- | --- |
+| Access token | `POST https://be.broker.ru/trade-api-keycloak/realms/tradeapi/protocol/openid-connect/token` | Обмен `BCS_REFRESH_TOKEN` на временный access token |
+| Портфель | `GET https://be.broker.ru/trade-api-bff-portfolio/api/v1/portfolio` | Общая стоимость в RUB и доступная разбивка по счетам и позициям |
 
-### Т Инвестиции (T-Invest API)
+Конфигурация: `BCS_REFRESH_TOKEN`, `BCS_CLIENT_ID`. Опция
+`BCS_ALLOW_SELF_SIGNED_TLS` действует только на запросы БКС.
 
-- Портфель: `POST https://invest-public-api.tbank.ru/rest/tinkoff.public.invest.api.contract.v1.OperationsService/GetPortfolio`
-- Счета: `POST https://invest-public-api.tbank.ru/rest/tinkoff.public.invest.api.contract.v1.UsersService/GetAccounts`
-- Приложение суммирует открытые счета в RUB независимо; сбой одного счета даёт частичный результат.
-- Нужны переменные:
-  - `TINVEST_API_TOKEN`
-  - `TINVEST_ALLOW_SELF_SIGNED_TLS` — отключает проверку сертификата только для T-Invest; в Docker по запросу включено по умолчанию.
+### Т Инвестиции
 
-Официальная документация:
+| Назначение | Endpoint | Использование |
+| --- | --- | --- |
+| Список счетов | `POST https://invest-public-api.tbank.ru/rest/tinkoff.public.invest.api.contract.v1.UsersService/GetAccounts` | Открытые инвестиционные счета |
+| Портфель счёта | `POST https://invest-public-api.tbank.ru/rest/tinkoff.public.invest.api.contract.v1.OperationsService/GetPortfolio` | `totalAmountPortfolio` в RUB; для DFA — `totalAmountDfa` |
 
-- БКС: `https://trade-api.bcs.ru/http/authorization/`, `https://trade-api.bcs.ru/http/portfolio/`
-- Т-Банк: `https://developer.tbank.ru/invest/api/operations-service-get-portfolio`
+Запрос портфеля выполняется отдельно для каждого счёта. Конфигурация:
+`TINVEST_API_TOKEN`. Опция `TINVEST_ALLOW_SELF_SIGNED_TLS` действует только на
+T-Invest.
 
 ### OKX
 
-- Используется приватный read-only endpoint `GET /api/v5/asset/asset-valuation?ccy=RUB`.
-- В портфель попадает поле `totalBal` — общая стоимость аккаунта уже в RUB, включая funding, trading и Earn-балансы.
-- Для региональных API-доменов можно переопределить `OKX_API_BASE_URL`.
-- Для API-ключа достаточно разрешения `Read`; торговые и withdrawal-разрешения не нужны.
-- Нужны переменные:
-  - `OKX_API_KEY`
-  - `OKX_SECRET_KEY`
-  - `OKX_API_PASSPHRASE`
-- Запрос подписывается HMAC-SHA256 с Base64-кодированием по схеме OKX.
+| Назначение | Endpoint | Использование |
+| --- | --- | --- |
+| Оценка аккаунта | `GET https://www.okx.com/api/v5/asset/asset-valuation?ccy=RUB` | `totalBal` — готовая общая стоимость аккаунта в RUB; `details` — справочная разбивка |
 
-Документация OKX: `https://www.okx.com/docs-v5/en/`
+Endpoint подписывается read-only API-ключом. Конфигурация: `OKX_API_KEY`,
+`OKX_SECRET_KEY`, `OKX_API_PASSPHRASE`. Домен можно заменить через
+`OKX_API_BASE_URL`.
 
-### Крипто
+### Крипто-портфель
 
-- `MORALIS_API_KEY` требуется только для EVM-адресов; BTC и Solana работают без него.
-- EVM-адреса из `EVM_ADDRESSES` считаются через Moralis Wallet Net Worth API
-  одновременно по сетям Ethereum и Arbitrum (native assets + токены).
-- BTC считается отдельно on-chain.
-- Solana считается как native SOL и SPL USDC через Solana JSON-RPC и цену SOL/RUB.
-- Каждый адрес из `EVM_ADDRESSES` также проверяется через публичный официальный
-  Hyperliquid Info API без API-ключа. Учитываются HyperCore spot, perpetual
-  account value, vault deposits, staking HYPE и subaccounts.
-- Для unified account и portfolio margin источником истины служит spot state:
-  perpetual account value в этих режимах повторно не прибавляется.
-- Итог Hyperliquid берётся из последней точки обычной серии `accountValueHistory`
-  endpoint `portfolio`. Детальные spot/perpetual/vault/staking значения сохраняются
-  для диагностики, но не складываются вручную и не влияют на официальный итог.
-- Для Hyperliquid нужно указывать в `EVM_ADDRESSES` master account, а не agent/API
-  wallet; subaccounts обнаруживаются автоматически.
-- Для SPL USDC используется mainnet mint `EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v`.
-- RPC endpoint можно переопределить через `SOLANA_RPC_URL`.
-- В snapshot сохраняется итоговая фиатная стоимость.
+| Секция | Endpoint | Использование |
+| --- | --- | --- |
+| Bitcoin | `GET https://blockstream.info/api/address/{address}` | On-chain баланс BTC: `funded_txo_sum - spent_txo_sum` |
+| EVM | `GET https://deep-index.moralis.io/api/v2.2/wallets/{address}/net-worth?chains[0]=eth&chains[1]=arbitrum&exclude_spam=true&exclude_unverified_contracts=true` | Net worth адреса в USD по Ethereum и Arbitrum |
+| Solana SOL | `POST {SOLANA_RPC_URL}` с методом `getBalance` | Нативный баланс SOL |
+| Solana USDC | `POST {SOLANA_RPC_URL}` с методом `getTokenAccountsByOwner` | Все SPL-счета основного USDC mint и их суммарный баланс |
+| BTC и SOL в RUB | `GET https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,solana&vs_currencies=rub` | Прямые цены BTC/RUB и SOL/RUB |
+| USD и USDC в RUB | `GET https://www.cbr-xml-daily.ru/daily_json.js` | Курс `Valute.USD.Value`; используется для Moralis, Hyperliquid и Solana USDC |
+
+Solana RPC по умолчанию: `https://api.mainnet-beta.solana.com`. Его можно заменить
+через `SOLANA_RPC_URL`. Используемый USDC mint:
+`EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v`.
+
+Moralis требует `MORALIS_API_KEY`. Адреса задаются в `BTC_ADDRESSES`,
+`EVM_ADDRESSES` и `SOL_ADDRESSES`.
+
+### Hyperliquid внутри крипто-портфеля
+
+Все запросы отправляются методом `POST` на `https://api.hyperliquid.xyz/info`.
+Для каждого адреса из `EVM_ADDRESSES` используются следующие значения поля `type`:
+
+| `type` | Использование |
+| --- | --- |
+| `portfolio` | Итоговая USD-стоимость: последняя точка обычной серии `day.accountValueHistory` |
+| `subAccounts` | Поиск subaccounts master-адреса; их портфели прибавляются к итогу |
+| `spotMetaAndAssetCtxs` | Метаданные и цены spot-активов для справочной разбивки |
+| `spotClearinghouseState` | Spot-балансы аккаунта |
+| `clearinghouseState` | Perpetual account value |
+| `userAbstraction` | Определение standard, unified account или portfolio margin |
+| `userVaultEquities` | Вложения пользователя в vaults |
+| `delegatorSummary` | Делегированный и ожидающий вывода HYPE |
+
+В итог входит только значение `portfolio`; остальные ответы сохраняются для
+прозрачной разбивки и не суммируются повторно. API-ключ не нужен. В
+`EVM_ADDRESSES` должен находиться master-адрес, а не agent/API wallet.
 
 ## Сбор данных
 
