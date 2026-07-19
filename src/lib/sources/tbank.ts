@@ -2,6 +2,7 @@ import { env } from '@/lib/config/env';
 import { getJson } from '@/lib/services/http';
 import { z } from 'zod';
 import type { PortfolioSource, SourceCollectionResult } from './types';
+import type { TBankBreakdown } from '@/types/portfolio';
 
 const TINVEST_GET_PORTFOLIO_URL =
   'https://invest-public-api.tbank.ru/rest/tinkoff.public.invest.api.contract.v1.OperationsService/GetPortfolio';
@@ -154,10 +155,14 @@ export class TBankSource implements PortfolioSource {
       if (!Number.isFinite(totalRub)) {
         throw new Error('T-Bank returned an invalid RUB total');
       }
-      return totalRub;
+      return {
+        totalRub,
+        positionsCount: payload.positions?.length ?? 0
+      };
     }));
     const successful = accountResults.filter(
-      (result): result is PromiseFulfilledResult<number> => result.status === 'fulfilled'
+      (result): result is PromiseFulfilledResult<{ totalRub: number; positionsCount: number }> =>
+        result.status === 'fulfilled'
     );
     const failedAccounts = accountResults.flatMap((result, index) => {
       if (result.status === 'fulfilled') {
@@ -183,13 +188,43 @@ export class TBankSource implements PortfolioSource {
     if (accounts.length > 0 && successful.length === 0) {
       throw new Error('All T-Bank accounts failed');
     }
-    const totalRub = toFiniteNumber(successful.reduce((sum, result) => sum + result.value, 0));
+    const totalRub = toFiniteNumber(successful.reduce((sum, result) => sum + result.value.totalRub, 0));
     const partial = successful.length !== accountResults.length;
     console.log('[source:tbank] snapshot', {
       accountsTotal: accounts.length,
       usedAccounts: successful.length,
       totalRub
     });
+
+    const breakdown: TBankBreakdown = {
+      kind: 'tbank',
+      accounts: accountResults.map((result, index) => {
+        const account = accounts[index];
+        if (result.status === 'fulfilled') {
+          return {
+            name: account.name?.trim() || 'Без названия',
+            type: account.type ?? 'ACCOUNT_TYPE_UNSPECIFIED',
+            totalRub: result.value.totalRub,
+            positionsCount: result.value.positionsCount,
+            status: 'ok'
+          };
+        }
+        return {
+          name: account.name?.trim() || 'Без названия',
+          type: account.type ?? 'ACCOUNT_TYPE_UNSPECIFIED',
+          totalRub: null,
+          positionsCount: 0,
+          status: 'error',
+          errorMessage: 'Портфель счёта недоступен'
+        };
+      }),
+      excludedAccounts: allAccounts
+        .filter((account) => (account.name ?? '').trim().toLowerCase() === 'кредитка')
+        .map((account) => ({
+          name: account.name?.trim() || 'Кредитка',
+          reason: 'Исключён из инвестиционного портфеля'
+        }))
+    };
 
     return {
       sourceId: this.id,
@@ -198,11 +233,7 @@ export class TBankSource implements PortfolioSource {
       observedAt: new Date().toISOString(),
       status: partial ? 'partial' : 'ok',
       ...(partial ? { errorMessage: 'Часть счетов временно недоступна' } : {}),
-      details: {
-        accountsTotal: accounts.length,
-        successfulAccounts: successful.length,
-        excludedCreditAccounts
-      }
+      details: breakdown as unknown as Record<string, unknown>
     } as SourceCollectionResult;
   }
 }

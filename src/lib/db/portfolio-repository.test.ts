@@ -40,7 +40,11 @@ describe('portfolio history repository', () => {
         totalRub: 100,
         capturedAt: '2026-01-03T00:00:00.000Z',
         observedAt: '2026-01-03T00:00:00.000Z',
-        status: 'ok'
+        status: 'ok',
+        details: {
+          kind: 'bcs',
+          positions: [{ ticker: 'TEST', name: undefined }]
+        }
       }]
     });
 
@@ -48,5 +52,6 @@ describe('portfolio history repository', () => {
     expect(call.update.components.deleteMany).toEqual({});
     expect(call.create.components).not.toHaveProperty('deleteMany');
     expect(call.create.components.create).toHaveLength(1);
+    expect(call.create.components.create[0].details.positions[0]).toEqual({ ticker: 'TEST' });
   });
 });

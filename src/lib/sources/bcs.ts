@@ -2,6 +2,7 @@ import { env } from '@/lib/config/env';
 import { getJson, getText } from '@/lib/services/http';
 import { z } from 'zod';
 import type { PortfolioSource, SourceCollectionResult } from './types';
+import type { BcsBreakdown } from '@/types/portfolio';
 
 const BCS_AUTH_URL = 'https://be.broker.ru/trade-api-keycloak/realms/tradeapi/protocol/openid-connect/token';
 const BCS_PORTFOLIO_URL = 'https://be.broker.ru/trade-api-bff-portfolio/api/v1/portfolio';
@@ -122,8 +123,17 @@ function getPositions(payload: unknown): Array<Record<string, unknown>> {
   return [];
 }
 
-function sumBcsPositionsRub(positions: Array<Record<string, unknown>>): number {
-  const groups = new Map<string, number>();
+function buildBcsAccounts(
+  positions: Array<Record<string, unknown>>
+): BcsBreakdown['accounts'] {
+  const deduplicated = new Map<string, {
+    account: string;
+    ticker: string;
+    name?: string;
+    instrumentType?: string;
+    quantity?: number;
+    totalRub: number;
+  }>();
 
   for (const position of positions) {
     const account = String(position.account ?? '');
@@ -159,17 +169,49 @@ function sumBcsPositionsRub(positions: Array<Record<string, unknown>>): number {
       continue;
     }
 
-    const existing = groups.get(key);
-    if (existing === undefined || Math.abs(rubValue) > Math.abs(existing)) {
-      groups.set(key, rubValue);
+    const row = {
+      account: account || subAccountId || agreementId || 'Основной счёт',
+      ticker: ticker || String(position.figi ?? position.instrumentUid ?? 'Без тикера'),
+      name: String(
+        position.name ??
+        position.shortName ??
+        position.instrumentName ??
+        position.securityName ??
+        ''
+      ) || undefined,
+      instrumentType: instrumentType || upperType || undefined,
+      quantity: toNumber(position.quantity ?? position.balance ?? position.qty) ?? undefined,
+      totalRub: rubValue
+    };
+    const existing = deduplicated.get(key);
+    if (existing === undefined || Math.abs(rubValue) > Math.abs(existing.totalRub)) {
+      deduplicated.set(key, row);
     }
   }
 
-  let sum = 0;
-  for (const value of groups.values()) {
-    sum += value;
+  const accounts = new Map<string, BcsBreakdown['accounts'][number]>();
+  for (const position of deduplicated.values()) {
+    const account = accounts.get(position.account) ?? {
+      account: position.account,
+      totalRub: 0,
+      positions: []
+    };
+    account.totalRub += position.totalRub;
+    account.positions.push({
+      ticker: position.ticker,
+      name: position.name,
+      instrumentType: position.instrumentType,
+      quantity: position.quantity,
+      totalRub: position.totalRub
+    });
+    accounts.set(position.account, account);
   }
-  return sum;
+  return [...accounts.values()]
+    .map((account) => ({
+      ...account,
+      positions: account.positions.sort((a, b) => Math.abs(b.totalRub) - Math.abs(a.totalRub))
+    }))
+    .sort((a, b) => Math.abs(b.totalRub) - Math.abs(a.totalRub));
 }
 
 export class BcsSource implements PortfolioSource {
@@ -204,7 +246,8 @@ export class BcsSource implements PortfolioSource {
     }
     const payload = parsePayload(bodyText);
     const positions = getPositions(payload);
-    const fromPositions = sumBcsPositionsRub(positions);
+    const accounts = buildBcsAccounts(positions);
+    const fromPositions = accounts.reduce((sum, account) => sum + account.totalRub, 0);
     const fromRoot =
       pickFirstNumberByKey(payload, new Set(['totalAmountRub', 'totalRub', 'portfolioAmountRub', 'totalValueRub']));
     const hasPositionValues = positions.some((position) =>
@@ -217,6 +260,11 @@ export class BcsSource implements PortfolioSource {
     }
     const totalRub = toFiniteNumber(hasPositionValues ? fromPositions : fromRoot!);
     const calculationMethod = hasPositionValues ? 'deduplicated-positions' : 'root-total';
+    const breakdown: BcsBreakdown = {
+      kind: 'bcs',
+      calculationMethod,
+      accounts
+    };
     console.log('[source:bcs] snapshot', {
       totalRub,
       positionsCount: positions.length,
@@ -229,10 +277,7 @@ export class BcsSource implements PortfolioSource {
       totalRub,
       observedAt: new Date().toISOString(),
       status: 'ok',
-      details: {
-        positionsCount: positions.length,
-        calculationMethod
-      }
+      details: breakdown as unknown as Record<string, unknown>
     };
   }
 }

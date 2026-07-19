@@ -19,7 +19,9 @@ function decimalToNumber(value: Prisma.Decimal | number): number {
 function toPrismaJson(
   value: Record<string, unknown> | undefined
 ): Prisma.NullableJsonNullValueInput | Prisma.InputJsonValue {
-  return value ? value as Prisma.InputJsonValue : Prisma.JsonNull;
+  return value
+    ? JSON.parse(JSON.stringify(value)) as Prisma.InputJsonValue
+    : Prisma.JsonNull;
 }
 
 function sourceStatus(value: string | null | undefined): SourceStatus {

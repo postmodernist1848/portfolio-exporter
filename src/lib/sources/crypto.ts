@@ -2,10 +2,13 @@ import { z } from 'zod';
 import { env } from '@/lib/config/env';
 import { getJson } from '@/lib/services/http';
 import { fetchUsdRubRate } from './currency';
+import { fetchHyperliquidBreakdown } from './hyperliquid';
 import type { PortfolioSource, SourceCollectionResult } from './types';
+import type { CryptoBreakdown } from '@/types/portfolio';
 
 const DEFAULT_SOLANA_RPC_URL = 'https://api.mainnet-beta.solana.com';
 const SOLANA_USDC_MINT = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
+export const MORALIS_EVM_CHAINS = ['eth', 'arbitrum'] as const;
 
 const btcSchema = z.object({
   chain_stats: z.object({
@@ -41,15 +44,35 @@ const pricesSchema = z.object({
   solana: z.object({ rub: z.number().nonnegative() })
 });
 const moralisSchema = z.object({
-  total_networth_usd: z.union([z.string(), z.number()]).transform(Number).pipe(z.number().finite())
+  total_networth_usd: z.union([z.string(), z.number()]).transform(Number).pipe(z.number().finite()),
+  chains: z.array(z.object({
+    chain: z.string(),
+    networth_usd: z.union([z.string(), z.number()]).transform(Number).pipe(z.number().finite())
+  })),
+  unsupported_chain_ids: z.array(z.string()).optional().default([]),
+  unavailable_chains: z.array(z.object({ chain_id: z.string() })).optional().default([])
 });
 
 function addresses(raw?: string): string[] {
   return raw?.split(',').map((value) => value.trim()).filter(Boolean) ?? [];
 }
 
-async function fetchBtcRub(wallets: string[]): Promise<number> {
-  if (!wallets.length) return 0;
+export function buildMoralisNetWorthUrl(address: string): string {
+  const url = new URL(
+    `https://deep-index.moralis.io/api/v2.2/wallets/${encodeURIComponent(address)}/net-worth`
+  );
+  MORALIS_EVM_CHAINS.forEach((chain, index) => {
+    url.searchParams.set(`chains[${index}]`, chain);
+  });
+  url.searchParams.set('exclude_spam', 'true');
+  url.searchParams.set('exclude_unverified_contracts', 'true');
+  return url.toString();
+}
+
+async function fetchBtcBreakdown(
+  wallets: string[],
+  pricesPromise: ReturnType<typeof fetchPrices>
+): Promise<{ totalRub: number; breakdown: NonNullable<CryptoBreakdown['btc']> }> {
   const [balances, prices] = await Promise.all([
     Promise.all(wallets.map((address) => getJson(
       `https://blockstream.info/api/address/${encodeURIComponent(address)}`,
@@ -57,13 +80,20 @@ async function fetchBtcRub(wallets: string[]): Promise<number> {
       btcSchema,
       { provider: 'blockstream', operation: 'btc-balance' }
     ))),
-    fetchPrices()
+    pricesPromise
   ]);
-  const btc = balances.reduce(
-    (sum, value) => sum + (value.chain_stats.funded_txo_sum - value.chain_stats.spent_txo_sum) / 1e8,
-    0
-  );
-  return btc * prices.bitcoin.rub;
+  const rows = balances.map((value, index) => {
+    const balanceBtc = (value.chain_stats.funded_txo_sum - value.chain_stats.spent_txo_sum) / 1e8;
+    return {
+      address: wallets[index],
+      balanceBtc,
+      totalRub: balanceBtc * prices.bitcoin.rub
+    };
+  });
+  return {
+    totalRub: rows.reduce((sum, row) => sum + row.totalRub, 0),
+    breakdown: { priceRub: prices.bitcoin.rub, wallets: rows }
+  };
 }
 
 async function fetchPrices() {
@@ -83,23 +113,22 @@ function rpcBody(method: string, params: unknown[]) {
   };
 }
 
-async function fetchSolRub(wallets: string[]): Promise<number> {
-  if (!wallets.length) return 0;
-  const [balances, prices] = await Promise.all([
+async function fetchSolanaBreakdown(
+  wallets: string[],
+  pricesPromise: ReturnType<typeof fetchPrices>,
+  ratePromise: ReturnType<typeof fetchUsdRubRate>
+): Promise<{
+  totalRub: number;
+  staleRate: boolean;
+  breakdown: NonNullable<CryptoBreakdown['solana']>;
+}> {
+  const [balances, tokenResponses, prices, rate] = await Promise.all([
     Promise.all(wallets.map((address) => getJson(
       env.SOLANA_RPC_URL ?? DEFAULT_SOLANA_RPC_URL,
       rpcBody('getBalance', [address]),
       solBalanceSchema,
       { provider: 'solana', operation: 'native-balance' }
     ))),
-    fetchPrices()
-  ]);
-  return balances.reduce((sum, item) => sum + item.result.value / 1e9, 0) * prices.solana.rub;
-}
-
-async function fetchSolUsdcRub(wallets: string[]): Promise<{ totalRub: number; staleRate: boolean }> {
-  if (!wallets.length) return { totalRub: 0, staleRate: false };
-  const [responses, rate] = await Promise.all([
     Promise.all(wallets.map((address) => getJson(
       env.SOLANA_RPC_URL ?? DEFAULT_SOLANA_RPC_URL,
       rpcBody('getTokenAccountsByOwner', [
@@ -110,30 +139,78 @@ async function fetchSolUsdcRub(wallets: string[]): Promise<{ totalRub: number; s
       solTokensSchema,
       { provider: 'solana', operation: 'usdc-balances' }
     ))),
-    fetchUsdRubRate()
+    pricesPromise,
+    ratePromise
   ]);
-  const usdc = responses.flatMap((item) => item.result.value).reduce((sum, item) => {
-    const token = item.account.data.parsed.info.tokenAmount;
-    return sum + Number(token.amount) / 10 ** token.decimals;
-  }, 0);
-  return { totalRub: usdc * rate.rate, staleRate: rate.stale };
+  const rows = wallets.map((address, index) => {
+    const balanceSol = balances[index].result.value / 1e9;
+    const balanceUsdc = tokenResponses[index].result.value.reduce((sum, item) => {
+      const token = item.account.data.parsed.info.tokenAmount;
+      return sum + Number(token.amount) / 10 ** token.decimals;
+    }, 0);
+    const solRub = balanceSol * prices.solana.rub;
+    const usdcRub = balanceUsdc * rate.rate;
+    return {
+      address,
+      balanceSol,
+      solRub,
+      balanceUsdc,
+      usdcRub,
+      totalRub: solRub + usdcRub
+    };
+  });
+  return {
+    totalRub: rows.reduce((sum, row) => sum + row.totalRub, 0),
+    staleRate: rate.stale,
+    breakdown: {
+      solPriceRub: prices.solana.rub,
+      usdRubRate: rate.rate,
+      rateStale: rate.stale,
+      wallets: rows
+    }
+  };
 }
 
-async function fetchEvmRub(wallets: string[]): Promise<{ totalRub: number; staleRate: boolean }> {
-  if (!wallets.length) return { totalRub: 0, staleRate: false };
+async function fetchEvmBreakdown(
+  wallets: string[],
+  ratePromise: ReturnType<typeof fetchUsdRubRate>
+): Promise<{
+  totalRub: number;
+  staleRate: boolean;
+  breakdown: NonNullable<CryptoBreakdown['evm']>;
+}> {
   if (!env.MORALIS_API_KEY) throw new Error('EVM provider is not configured');
   const [values, rate] = await Promise.all([
     Promise.all(wallets.map((address) => getJson(
-      `https://deep-index.moralis.io/api/v2.2/wallets/${encodeURIComponent(address)}/net-worth?exclude_spam=true&exclude_unverified_contracts=true`,
+      buildMoralisNetWorthUrl(address),
       { headers: { 'X-API-Key': env.MORALIS_API_KEY! } },
       moralisSchema,
       { provider: 'moralis', operation: 'evm-net-worth' }
     ))),
-    fetchUsdRubRate()
+    ratePromise
   ]);
+  const rows = values.map((value, index) => {
+    const totalUsd = Number(value.total_networth_usd);
+    return {
+      address: wallets[index],
+      totalUsd,
+      totalRub: totalUsd * rate.rate,
+      chains: value.chains.map((chain) => ({
+        chain: chain.chain,
+        totalUsd: Number(chain.networth_usd)
+      })),
+      unsupportedChains: value.unsupported_chain_ids ?? [],
+      unavailableChains: (value.unavailable_chains ?? []).map((chain) => chain.chain_id)
+    };
+  });
   return {
-    totalRub: values.reduce((sum, item) => sum + Number(item.total_networth_usd), 0) * rate.rate,
-    staleRate: rate.stale
+    totalRub: rows.reduce((sum, row) => sum + row.totalRub, 0),
+    staleRate: rate.stale,
+    breakdown: {
+      usdRubRate: rate.rate,
+      rateStale: rate.stale,
+      wallets: rows
+    }
   };
 }
 
@@ -144,29 +221,72 @@ export class CryptoSource implements PortfolioSource {
   async fetchSnapshot(): Promise<SourceCollectionResult> {
     const observedAt = new Date().toISOString();
     const btc = addresses(env.BTC_ADDRESSES);
-    const evm = addresses(env.ETH_ADDRESSES);
+    const evm = addresses(env.EVM_ADDRESSES ?? env.ETH_ADDRESSES);
+    if (!env.EVM_ADDRESSES && env.ETH_ADDRESSES) {
+      console.warn('[source:crypto] ETH_ADDRESSES is deprecated; rename it to EVM_ADDRESSES');
+    }
     const sol = addresses(env.SOL_ADDRESSES);
-    const configured = Number(Boolean(btc.length)) + Number(Boolean(evm.length)) + Number(Boolean(sol.length)) * 2;
+    const hyperliquid = evm;
+    const configured = Number(Boolean(btc.length)) + Number(Boolean(evm.length))
+      + Number(Boolean(sol.length)) + Number(Boolean(hyperliquid.length));
     if (!configured) {
       return { sourceId: this.id, sourceName: this.name, totalRub: 0, status: 'disabled' };
     }
 
-    const tasks: Array<Promise<number | { totalRub: number; staleRate: boolean }>> = [];
-    if (btc.length) tasks.push(fetchBtcRub(btc));
-    if (evm.length) tasks.push(fetchEvmRub(evm));
-    if (sol.length) tasks.push(fetchSolRub(sol), fetchSolUsdcRub(sol));
-    const settled = await Promise.allSettled(tasks);
+    const pricesPromise = btc.length || sol.length ? fetchPrices() : null;
+    const ratePromise = evm.length || sol.length || hyperliquid.length ? fetchUsdRubRate() : null;
+    const tasks: Array<{
+      key: 'btc' | 'evm' | 'solana' | 'hyperliquid';
+      promise: Promise<{
+        totalRub: number;
+        staleRate?: boolean;
+        incomplete?: boolean;
+        breakdown: NonNullable<
+          CryptoBreakdown['btc']
+          | CryptoBreakdown['evm']
+          | CryptoBreakdown['solana']
+          | CryptoBreakdown['hyperliquid']
+        >;
+      }>;
+    }> = [];
+    if (btc.length && pricesPromise) {
+      tasks.push({ key: 'btc', promise: fetchBtcBreakdown(btc, pricesPromise) });
+    }
+    if (evm.length && ratePromise) {
+      tasks.push({ key: 'evm', promise: fetchEvmBreakdown(evm, ratePromise) });
+    }
+    if (sol.length && pricesPromise && ratePromise) {
+      tasks.push({ key: 'solana', promise: fetchSolanaBreakdown(sol, pricesPromise, ratePromise) });
+    }
+    if (hyperliquid.length && ratePromise) {
+      tasks.push({
+        key: 'hyperliquid',
+        promise: fetchHyperliquidBreakdown(hyperliquid, ratePromise)
+      });
+    }
+    const settled = await Promise.allSettled(tasks.map((task) => task.promise));
     const succeeded = settled.filter((item) => item.status === 'fulfilled');
     if (!succeeded.length) throw new Error('All configured crypto components failed');
 
-    const totalRub = succeeded.reduce((sum, item) => {
-      if (item.status !== 'fulfilled') return sum;
-      return sum + (typeof item.value === 'number' ? item.value : item.value.totalRub);
-    }, 0);
+    const totalRub = succeeded.reduce((sum, item) => sum + item.value.totalRub, 0);
     const hasStaleRate = succeeded.some(
-      (item) => item.status === 'fulfilled' && typeof item.value !== 'number' && item.value.staleRate
+      (item) => item.value.staleRate
     );
-    const partial = succeeded.length !== settled.length || hasStaleRate;
+    const incomplete = succeeded.some((item) => item.value.incomplete);
+    const partial = succeeded.length !== settled.length || hasStaleRate || incomplete;
+    const breakdown: CryptoBreakdown = { kind: 'crypto' };
+    settled.forEach((result, index) => {
+      if (result.status !== 'fulfilled') return;
+      const key = tasks[index].key;
+      if (key === 'btc') breakdown.btc = result.value.breakdown as NonNullable<CryptoBreakdown['btc']>;
+      if (key === 'evm') breakdown.evm = result.value.breakdown as NonNullable<CryptoBreakdown['evm']>;
+      if (key === 'solana') {
+        breakdown.solana = result.value.breakdown as NonNullable<CryptoBreakdown['solana']>;
+      }
+      if (key === 'hyperliquid') {
+        breakdown.hyperliquid = result.value.breakdown as NonNullable<CryptoBreakdown['hyperliquid']>;
+      }
+    });
     return {
       sourceId: this.id,
       sourceName: this.name,
@@ -174,7 +294,7 @@ export class CryptoSource implements PortfolioSource {
       observedAt,
       status: partial ? 'partial' : 'ok',
       ...(partial ? { errorMessage: 'Часть крипто-данных временно недоступна' } : {}),
-      details: { configuredComponents: configured, successfulComponents: succeeded.length }
+      details: breakdown as unknown as Record<string, unknown>
     } as SourceCollectionResult;
   }
 }

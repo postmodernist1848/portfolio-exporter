@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { PortfolioLineChart } from '@/components/line-chart';
 import { RefreshControl } from '@/components/refresh-control';
+import { SourceBreakdownView } from '@/components/source-breakdown';
 import { getDashboardData } from '@/lib/services/portfolio-service';
 import { SOURCE_METADATA } from '@/lib/sources/metadata';
 import type { HistoryRange } from '@/lib/db/portfolio-repository';
@@ -102,35 +103,6 @@ export default async function HomePage({
         )}
       </section>
 
-      <section className="grid grid-3 source-grid">
-        {snapshot.components.map((component) => (
-          <article className={`card source-card status-${component.status}`} key={component.sourceId}>
-            <div className="card-heading">
-              <p className="muted">{component.sourceName}</p>
-              <span className={`badge ${component.status}`}>
-                {statusLabels[component.status]}
-                {component.infoMessage && (
-                  <span
-                    className="info-tooltip"
-                    tabIndex={0}
-                    aria-label={component.infoMessage}
-                    data-tooltip={component.infoMessage}
-                  >
-                    i
-                  </span>
-                )}
-              </span>
-            </div>
-            <p className="value source-value">{currency.format(component.totalRub)}</p>
-            <Change value={component.change} />
-            {component.status !== 'disabled' && (
-              <p className="observation">Данные: {formatMoscowDateTime(component.observedAt)}</p>
-            )}
-            {component.message && <p className="warning">{component.message}</p>}
-          </article>
-        ))}
-      </section>
-
       <nav className="range-control" aria-label="Диапазон истории">
         {ranges.map((item) => (
           <Link className={range === item.id ? 'active' : ''} href={`/?range=${item.id}`} key={item.id}>
@@ -144,14 +116,56 @@ export default async function HomePage({
         <PortfolioLineChart data={totalHistory} color="#2c6e62" />
       </section>
 
-      <section className="grid grid-3">
-        {snapshot.components.filter((item) => item.status !== 'disabled').map((component) => (
-          <article className="card" key={`${component.sourceId}-chart`}>
-            <h3 className="section-title">{component.sourceName}</h3>
-            <PortfolioLineChart
-              data={sourceHistory[component.sourceId] ?? []}
-              color={SOURCE_METADATA[component.sourceId].color}
-            />
+      <section className="source-sections">
+        {snapshot.components.map((component) => (
+          <article className={`card source-section status-${component.status}`} key={component.sourceId}>
+            <header className="source-section-header">
+              <div>
+                <p className="muted">Источник</p>
+                <h2>{component.sourceName}</h2>
+              </div>
+              <span className={`badge ${component.status}`}>
+                {statusLabels[component.status]}
+                {component.infoMessage && (
+                  <span
+                    className="info-tooltip"
+                    tabIndex={0}
+                    aria-label={component.infoMessage}
+                    data-tooltip={component.infoMessage}
+                  >
+                    i
+                  </span>
+                )}
+              </span>
+            </header>
+
+            <div className="source-summary-grid">
+              <div className="source-summary">
+                <p className="muted">Стоимость источника</p>
+                <p className="value source-value">{currency.format(component.totalRub)}</p>
+                <Change value={component.change} />
+                {component.status !== 'disabled' && (
+                  <p className="observation">Данные: {formatMoscowDateTime(component.observedAt)}</p>
+                )}
+                {component.message && <p className="warning">{component.message}</p>}
+              </div>
+              {component.status !== 'disabled' && (
+                <div className="source-chart">
+                  <h3 className="section-title">Динамика</h3>
+                  <PortfolioLineChart
+                    data={sourceHistory[component.sourceId] ?? []}
+                    color={SOURCE_METADATA[component.sourceId].color}
+                  />
+                </div>
+              )}
+            </div>
+
+            {component.status !== 'disabled' && (
+              <div className="source-breakdown">
+                <h3 className="section-title">Состав и метод расчёта</h3>
+                <SourceBreakdownView breakdown={component.breakdown} />
+              </div>
+            )}
           </article>
         ))}
       </section>

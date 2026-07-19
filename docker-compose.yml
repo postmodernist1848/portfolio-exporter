@@ -46,7 +46,8 @@ services:
     environment:
       DATABASE_URL: ${DATABASE_URL}
       BTC_ADDRESSES: ${BTC_ADDRESSES}
-      ETH_ADDRESSES: ${ETH_ADDRESSES}
+      EVM_ADDRESSES: ${EVM_ADDRESSES:-}
+      ETH_ADDRESSES: ${ETH_ADDRESSES:-}
       SOL_ADDRESSES: ${SOL_ADDRESSES}
       SOLANA_RPC_URL: ${SOLANA_RPC_URL:-https://api.mainnet-beta.solana.com}
       MORALIS_API_KEY: ${MORALIS_API_KEY}

@@ -9,6 +9,8 @@ import type {
   DashboardData,
   DashboardSnapshot,
   PortfolioSnapshot,
+  PortfolioSourceId,
+  SourceBreakdown,
   ValueChange
 } from '@/types/portfolio';
 
@@ -18,6 +20,19 @@ function change(current: number, previous: number | undefined): ValueChange {
     absoluteRub: current - previous,
     percentage: previous === 0 ? null : ((current - previous) / previous) * 100
   };
+}
+
+function breakdownFor(
+  sourceId: PortfolioSourceId,
+  details: Record<string, unknown> | undefined
+): SourceBreakdown | undefined {
+  const expectedKind: Record<PortfolioSourceId, SourceBreakdown['kind']> = {
+    crypto: 'crypto',
+    tbank: 'tbank',
+    bcs: 'bcs',
+    okx: 'okx'
+  };
+  return details?.kind === expectedKind[sourceId] ? details as SourceBreakdown : undefined;
 }
 
 function toDashboardSnapshot(
@@ -48,6 +63,7 @@ function toDashboardSnapshot(
         status: component.status,
         message: component.errorMessage,
         infoMessage: SOURCE_METADATA[component.sourceId].infoMessage,
+        breakdown: breakdownFor(component.sourceId, component.details),
         change: change(component.totalRub, previousBySource.get(component.sourceId)?.totalRub)
       }))
   };

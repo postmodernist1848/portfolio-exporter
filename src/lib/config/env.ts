@@ -24,6 +24,7 @@ const schema = z.object({
   MORALIS_API_KEY: optionalString,
   BCS_ALLOW_SELF_SIGNED_TLS: optionalBoolean.default(false),
   BTC_ADDRESSES: optionalString,
+  EVM_ADDRESSES: optionalString,
   ETH_ADDRESSES: optionalString,
   SOL_ADDRESSES: optionalString,
   SOLANA_RPC_URL: optionalUrl
@@ -51,6 +52,7 @@ export const env = schema.parse({
   MORALIS_API_KEY: process.env.MORALIS_API_KEY,
   BCS_ALLOW_SELF_SIGNED_TLS: process.env.BCS_ALLOW_SELF_SIGNED_TLS,
   BTC_ADDRESSES: process.env.BTC_ADDRESSES,
+  EVM_ADDRESSES: process.env.EVM_ADDRESSES,
   ETH_ADDRESSES: process.env.ETH_ADDRESSES,
   SOL_ADDRESSES: process.env.SOL_ADDRESSES,
   SOLANA_RPC_URL: process.env.SOLANA_RPC_URL

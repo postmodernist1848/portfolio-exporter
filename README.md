@@ -14,6 +14,13 @@
 - Встроенная в приложение почасовая джоба сбора данных.
 - API для ручного триггера сбора.
 - Графики общей стоимости и по каждому источнику.
+- Детализация последнего snapshot без дополнительных API-запросов:
+  - Crypto по публичным адресам и активам BTC/EVM/SOL/USDC.
+  - T-Invest по открытым счетам.
+  - БКС по счетам и дедуплицированным позициям.
+  - OKX по категориям, если их возвращает Asset Valuation API.
+
+Dashboard публичный: сохранённые wallet-адреса и названия инвестиционных счетов отображаются без маскирования.
 
 ## Архитектура расширения
 
@@ -115,9 +122,22 @@ make logs
 ### Крипто
 
 - `MORALIS_API_KEY` требуется только для EVM-адресов; BTC и Solana работают без него.
-- EVM адреса считаются через Moralis Wallet Net Worth API (native assets + токены).
+- EVM-адреса из `EVM_ADDRESSES` считаются через Moralis Wallet Net Worth API
+  одновременно по сетям Ethereum и Arbitrum (native assets + токены).
+- `ETH_ADDRESSES` временно поддерживается как fallback для миграции, но новые
+  конфигурации должны использовать `EVM_ADDRESSES`.
 - BTC считается отдельно on-chain.
 - Solana считается как native SOL и SPL USDC через Solana JSON-RPC и цену SOL/RUB.
+- Каждый адрес из `EVM_ADDRESSES` также проверяется через публичный официальный
+  Hyperliquid Info API без API-ключа. Учитываются HyperCore spot, perpetual
+  account value, vault deposits, staking HYPE и subaccounts.
+- Для unified account и portfolio margin источником истины служит spot state:
+  perpetual account value в этих режимах повторно не прибавляется.
+- Итог Hyperliquid берётся из последней точки обычной серии `accountValueHistory`
+  endpoint `portfolio`. Детальные spot/perpetual/vault/staking значения сохраняются
+  для диагностики, но не складываются вручную и не влияют на официальный итог.
+- Для Hyperliquid нужно указывать в `EVM_ADDRESSES` master account, а не agent/API
+  wallet; subaccounts обнаруживаются автоматически.
 - Для SPL USDC используется mainnet mint `EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v`.
 - RPC endpoint можно переопределить через `SOLANA_RPC_URL`.
 - В snapshot сохраняется итоговая фиатная стоимость.

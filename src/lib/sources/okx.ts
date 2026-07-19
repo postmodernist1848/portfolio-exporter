@@ -2,6 +2,7 @@ import { env } from '@/lib/config/env';
 import { getJson } from '@/lib/services/http';
 import { z } from 'zod';
 import type { PortfolioSource, SourceCollectionResult } from './types';
+import type { OkxBreakdown } from '@/types/portfolio';
 
 const OKX_DEFAULT_API_BASE_URL = 'https://www.okx.com';
 const OKX_VALUATION_PATH = '/api/v5/asset/asset-valuation?ccy=RUB';
@@ -84,6 +85,14 @@ export class OkxSource implements PortfolioSource {
     }
 
     const valuation = response.data?.[0];
+    const breakdown: OkxBreakdown = {
+      kind: 'okx',
+      updatedAt: valuation?.ts,
+      categories: Object.entries(valuation?.details ?? {})
+        .map(([name, value]) => ({ name, totalRub: Number(value) }))
+        .filter((item) => Number.isFinite(item.totalRub))
+        .sort((a, b) => Math.abs(b.totalRub) - Math.abs(a.totalRub))
+    };
 
     console.log('[source:okx] snapshot', {
       totalRub,
@@ -96,11 +105,7 @@ export class OkxSource implements PortfolioSource {
       totalRub,
       observedAt: capturedAt,
       status: 'ok',
-      details: {
-        provider: 'okx-asset-valuation',
-        currency: 'RUB',
-        updatedAt: valuation?.ts
-      }
+      details: breakdown as unknown as Record<string, unknown>
     };
   }
 }
