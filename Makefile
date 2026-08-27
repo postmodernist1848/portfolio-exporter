@@ -6,6 +6,7 @@ DEPLOY_IMAGE_ARCHIVE ?= /tmp/portfolio-exporter-images.tar.gz
 .PHONY: deploy deploy-build-remote logs status
 
 deploy:
+	ssh $(DEPLOY_HOST) 'set -e; cd $(DEPLOY_DIR); git fetch origin $(DEPLOY_BRANCH); git reset --hard origin/$(DEPLOY_BRANCH)'
 	docker build -t portfolio-exporter-app:latest .
 	docker build --target migrator -t portfolio-exporter-migrate:latest .
 	docker save portfolio-exporter-app:latest portfolio-exporter-migrate:latest | gzip > $(DEPLOY_IMAGE_ARCHIVE)
