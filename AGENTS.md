@@ -3,7 +3,7 @@
 ## Purpose and deployment model
 
 - This is a public, single-user portfolio dashboard written in Russian.
-- Stack: Next.js 14 App Router, React 18, TypeScript, Prisma, PostgreSQL,
+- Stack: Next.js 16 App Router with Turbopack, React 19, TypeScript, Prisma 7, PostgreSQL,
   Recharts, Zod, Vitest, and Docker Compose.
 - The application runs on one Docker host as an app container plus PostgreSQL.
 - The application listens on port `3000`.

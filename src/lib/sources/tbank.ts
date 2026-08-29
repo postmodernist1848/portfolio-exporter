@@ -145,7 +145,7 @@ export class TBankSource implements PortfolioSource {
             nano: z.number(),
             currency: z.literal('rub').or(z.literal('RUB'))
           }).optional(),
-          positions: z.array(z.record(z.unknown())).optional()
+          positions: z.array(z.record(z.string(), z.unknown())).optional()
         }), {
           provider: 'tbank',
           operation: 'portfolio',

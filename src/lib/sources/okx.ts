@@ -71,7 +71,7 @@ export class OkxSource implements PortfolioSource {
       data: z.array(z.object({
         totalBal: z.string(),
         ts: z.string().optional(),
-        details: z.record(z.string()).optional()
+        details: z.record(z.string(), z.string()).optional()
       }))
     }), { provider: 'okx', operation: 'asset-valuation' });
 

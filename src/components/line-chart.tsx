@@ -64,7 +64,7 @@ export function PortfolioLineChart({ data, color = '#2c6e62' }: Props) {
           />
           <Tooltip
             labelFormatter={(_, payload) => payload?.[0]?.payload?.fullLabel ?? ''}
-            formatter={(value: number) => [rub.format(value), 'Стоимость']}
+            formatter={(value) => [rub.format(Number(value ?? 0)), 'Стоимость']}
           />
           <Line type="monotone" dataKey="totalRub" stroke={color} strokeWidth={2.4} dot={false} />
         </LineChart>
