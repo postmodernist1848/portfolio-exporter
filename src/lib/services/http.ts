@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { Agent } from 'undici';
+import { Agent, fetch as undiciFetch } from 'undici';
 import type { ZodType } from 'zod';
 
 const DEFAULT_TIMEOUT_MS = 15_000;
@@ -63,16 +63,24 @@ async function requestText(
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), context.timeoutMs ?? DEFAULT_TIMEOUT_MS);
     try {
-      const requestInit: RequestInit & { dispatcher?: Agent } = {
+      const requestInit: RequestInit = {
         ...init,
         cache: 'no-store',
         signal: controller.signal
       };
-      if (context.allowSelfSignedTls) {
-        selfSignedAgent ??= new Agent({ connect: { rejectUnauthorized: false } });
-        requestInit.dispatcher = selfSignedAgent;
-      }
-      const response = await fetch(url, requestInit);
+      // A dispatcher must be consumed by the same Undici package version that
+      // created it. Node's global fetch can bundle a different Undici major.
+      const response = context.allowSelfSignedTls
+        ? await undiciFetch(
+            url,
+            {
+              ...requestInit,
+              dispatcher: selfSignedAgent ??= new Agent({
+                connect: { rejectUnauthorized: false }
+              })
+            } as Parameters<typeof undiciFetch>[1]
+          )
+        : await fetch(url, requestInit);
       if (!response.ok) {
         throw new HttpError(
           `HTTP ${response.status}`,
