@@ -50,10 +50,12 @@ function ageLabel(timestamp: string): string {
 export default async function HomePage({
   searchParams
 }: {
-  searchParams?: { range?: string };
+  searchParams?: Promise<{ range?: string | string[] }>;
 }) {
-  const range = ranges.some((item) => item.id === searchParams?.range)
-    ? searchParams!.range as HistoryRange
+  const requestedRange = (await searchParams)?.range;
+  const range = typeof requestedRange === 'string'
+    && ranges.some((item) => item.id === requestedRange)
+    ? requestedRange as HistoryRange
     : '7d';
   const { snapshot, totalHistory, sourceHistory } = await getDashboardData(range);
 
