@@ -5,7 +5,12 @@
 - This is a public, single-user portfolio dashboard written in Russian.
 - Stack: Next.js 16 App Router with Turbopack, React 19, TypeScript, Prisma 7, PostgreSQL,
   Recharts, Zod, Vitest, and Docker Compose.
-- The application runs on one Docker host as an app container plus PostgreSQL.
+- The application supports Docker (app plus PostgreSQL) and Vercel (external PostgreSQL).
+- Vercel disables the internal scheduler. cron-job.org uses hourly
+  `POST /api/collect?background=1`; Next.js `after` runs the collection after a 202 response.
+- All triggers use a transaction-scoped PostgreSQL advisory lock and a persisted
+  60-second cooldown. Save snapshots in the lock transaction; do not replace this
+  with process-local coordination on serverless deployments.
 - The application listens on port `3000`.
 - Production deployment and database changes are external side effects. Perform
   them only when explicitly requested, preview destructive database selections

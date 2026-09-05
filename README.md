@@ -34,7 +34,7 @@ Dashboard публичный: сохранённые wallet-адреса и на
 ## Быстрый старт
 
 ```bash
-npm install
+npm ci
 cp .env.example .env
 npm run db:generate
 npm run db:push
@@ -42,6 +42,73 @@ npm run dev
 ```
 
 Приложение: `http://localhost:3000`
+
+## Vercel + cron-job.org
+
+Поддерживается Vercel с Node.js 24 и Fluid Compute. PostgreSQL должен быть
+внешним и доступным из Vercel: Docker-адрес `db:5432` для этого не подходит.
+Встроенный startup/hourly scheduler на Vercel автоматически отключается.
+Рендер dashboard и GET API читают только БД.
+
+1. Создайте PostgreSQL (например, Neon через Vercel Marketplace) и укажите
+   `DATABASE_URL` с pooled connection string и TLS-настройками провайдера.
+   Для Prisma schema-команд можно отдельно задать `DIRECT_URL` — прямую строку
+   подключения к той же БД. Не используйте transaction pooler с idle transaction
+   timeout меньше 300 секунд: сбор удерживает транзакционный advisory lock.
+2. Импортируйте Git-репозиторий в Vercel, выберите Next.js, Node.js 24.x и
+   включённый Fluid Compute. `vercel.json` задаёт `npm ci` и генерацию Prisma
+   перед сборкой. Dockerfile на Vercel не используется.
+3. Добавьте серверные переменные из `.env.example` в Production environment:
+   `DATABASE_URL`, нужные ключи провайдеров и адреса кошельков. Не добавляйте
+   префикс `NEXT_PUBLIC_` к секретам. Все три переменные OKX задаются вместе.
+   Для Preview используйте отдельную БД и тестовые настройки, не production.
+4. Перед первым запуском подготовьте схему в выбранной БД: с соответствующими
+   переменными подключения выполните `npm run db:generate` и `npm run db:push`.
+   Команда build намеренно не меняет БД. Для переноса существующей истории
+   сначала перенесите PostgreSQL backup в новую БД; пустая БД историю не получит.
+5. После deployment проверьте `/api/health` и настройте cron-job.org:
+
+   | Настройка | Значение |
+   | --- | --- |
+   | URL | `https://YOUR-PROJECT.vercel.app/api/collect?background=1` |
+   | Advanced → Request method | `POST` |
+   | Request body | пустое |
+   | Schedule | каждый час, `0 * * * *` |
+   | Timezone | `Europe/Moscow` |
+   | Save responses | по желанию; ответ содержит только `state` |
+
+   Используйте HTTPS-адрес deployment без порта `:3000` и путь
+   `/api/collect?background=1`. Endpoint принимает только POST.
+   Для self-hosted Docker с внешним cron задайте `SCHEDULER_ENABLED=false`.
+   При переносе с Docker на Vercel отключите сбор на прежнем хосте
+   после переключения production.
+
+6. Запустите тест cron-job.org. Ожидаемый ответ: HTTP 202 `{"state":"accepted"}`.
+   Это подтверждение принятия триггера, а не успешного сбора. Проверьте новый
+   `capturedAt` и `status` в `/api/portfolio`, а также запись
+   `[collection] background finished` в Vercel Logs. Поле `state` может быть
+   `completed`, `in_progress` или `cooldown`. При ошибке callback пишет
+   `[collection] background failed`; настройте контроль свежести snapshot,
+   потому что cron-job.org не видит ошибку, случившуюся после ответа 202.
+
+Сбор выполняется через Next.js `after`, который Vercel поддерживает после
+отправки ответа, с `maxDuration=300`. Это помогает избежать стандартного
+30-секундного timeout cron-job.org. Это не надёжная очередь: при остановке
+функции потребуется следующий триггер. Незавершённый snapshot не записывается.
+PostgreSQL advisory lock исключает параллельные сборы на разных экземплярах;
+60-секундный cooldown также проверяется по сохранённому времени создания
+snapshot. Потеря соединения/завершение транзакции освобождает lock.
+
+`POST /api/collect` без параметра `background=1` возвращает результат
+синхронно и используется кнопкой обновления на dashboard.
+Endpoint публичный: ключи провайдеров хранятся в приложении и не требуются
+для настройки cron-job.org.
+Если Vercel Deployment Protection закрывает production URL, настройте его
+доступность для cron (либо отдельный automation bypass header в Advanced).
+
+Ссылки: [Next.js after](https://nextjs.org/docs/app/api-reference/functions/after),
+[Vercel duration](https://vercel.com/docs/functions/configuring-functions/duration),
+[cron-job.org limits](https://cron-job.org/en/faq/).
 
 ## Docker Deploy
 

@@ -5,6 +5,7 @@ const state = vi.hoisted(() => ({
   resolveCrypto: null as null | (() => void),
   fetchCrypto: vi.fn(),
   saveSnapshot: vi.fn(),
+  lock: vi.fn(),
   latest: null as PortfolioSnapshot | null
 }));
 
@@ -46,8 +47,18 @@ vi.mock('@/lib/sources', () => ({
   ]
 }));
 
+vi.mock('@/lib/db/collection-lock', () => ({
+  collectWithDatabaseLock: state.lock
+}));
+
 describe('collection coordinator', () => {
   beforeEach(() => {
+    state.lock.mockReset();
+    state.lock.mockImplementation(async (collect: () => Promise<PortfolioSnapshot>) => {
+      const snapshot = await collect();
+      await state.saveSnapshot(snapshot);
+      return { state: 'completed', snapshot };
+    });
     state.saveSnapshot.mockReset();
     state.fetchCrypto.mockReset();
     state.latest = null;
@@ -79,6 +90,17 @@ describe('collection coordinator', () => {
     });
     expect(state.fetchCrypto).toHaveBeenCalledTimes(1);
     expect(state.saveSnapshot).toHaveBeenCalledTimes(1);
+    state.lock.mockResolvedValueOnce({ state: 'cooldown', snapshot: null });
     await expect(requestPublicCollection()).resolves.toMatchObject({ state: 'cooldown' });
+    expect(state.lock).toHaveBeenCalledTimes(2);
+  });
+
+  it('clears local in-flight state after a database failure so the next request can retry', async () => {
+    state.lock.mockRejectedValueOnce(new Error('Database unavailable'));
+    const { requestPublicCollection } = await import('./collection-coordinator');
+    await expect(requestPublicCollection()).rejects.toThrow('Database unavailable');
+    state.lock.mockResolvedValueOnce({ state: 'in_progress', snapshot: null });
+    await expect(requestPublicCollection()).resolves.toMatchObject({ state: 'in_progress' });
+    expect(state.lock).toHaveBeenCalledTimes(2);
   });
 });

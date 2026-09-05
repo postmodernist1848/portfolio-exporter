@@ -1,9 +1,26 @@
-import { NextResponse } from 'next/server';
+import { after, NextResponse } from 'next/server';
 import { requestPublicCollection } from '@/lib/services/collection-coordinator';
 
 export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+export const maxDuration = 300;
 
-export async function POST() {
+export async function POST(request: Request) {
+  if (new URL(request.url).searchParams.get('background') === '1') {
+    after(async () => {
+      try {
+        const result = await requestPublicCollection();
+        console.info('[collection] background finished', {
+          state: result.state,
+          capturedAt: result.snapshot?.capturedAt,
+          status: result.snapshot?.status
+        });
+      } catch {
+        console.error('[collection] background failed');
+      }
+    });
+    return NextResponse.json({ state: 'accepted' }, { status: 202 });
+  }
   try {
     const result = await requestPublicCollection();
     return NextResponse.json({

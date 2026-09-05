@@ -1,4 +1,6 @@
 import { randomUUID } from 'node:crypto';
+import { AsyncLocalStorage } from 'node:async_hooks';
+import { setTimeout as sleep } from 'node:timers/promises';
 import { Agent, fetch as undiciFetch } from 'undici';
 import type { ZodType } from 'zod';
 
@@ -26,7 +28,17 @@ type RequestContext = {
 };
 let selfSignedAgent: Agent | undefined;
 
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+const collectionSignal = new AsyncLocalStorage<AbortSignal>();
+
+export async function withCollectionDeadline<T>(run: () => Promise<T>, timeoutMs = 250_000): Promise<T> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await collectionSignal.run(controller.signal, run);
+  } finally {
+    clearTimeout(timer);
+  }
+}
 
 function retryAfterMs(value: string | null): number | undefined {
   if (!value) return undefined;
@@ -57,8 +69,10 @@ async function requestText(
   const method = (init.method ?? 'GET').toUpperCase();
   const attempts = context.attempts ?? DEFAULT_ATTEMPTS;
   let lastError: unknown;
+  const deadline = collectionSignal.getStore();
 
   for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    deadline?.throwIfAborted();
     const startedAt = Date.now();
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), context.timeoutMs ?? DEFAULT_TIMEOUT_MS);
@@ -66,7 +80,7 @@ async function requestText(
       const requestInit: RequestInit = {
         ...init,
         cache: 'no-store',
-        signal: controller.signal
+        signal: deadline ? AbortSignal.any([controller.signal, deadline]) : controller.signal
       };
       // A dispatcher must be consumed by the same Undici package version that
       // created it. Node's global fetch can bundle a different Undici major.
@@ -113,12 +127,12 @@ async function requestText(
         retryable,
         error: safeError(error)
       });
-      if (!retryable || attempt === attempts) break;
+      if (!retryable || attempt === attempts || deadline?.aborted) break;
       const exponential = BACKOFF_BASE_MS * 2 ** (attempt - 1);
       const jittered = exponential * (0.75 + Math.random() * 0.5);
       await sleep(error instanceof HttpError && error.retryAfterMs !== undefined
         ? error.retryAfterMs
-        : jittered);
+        : jittered, undefined, { signal: deadline });
     } finally {
       clearTimeout(timeout);
     }

@@ -28,6 +28,7 @@ services:
     restart: "no"
     environment:
       DATABASE_URL: ${DATABASE_URL}
+      DIRECT_URL: ${DIRECT_URL:-}
 
   app:
     image: portfolio-exporter-app:latest
@@ -46,6 +47,7 @@ services:
     environment:
       DATABASE_URL: ${DATABASE_URL}
       BTC_ADDRESSES: ${BTC_ADDRESSES}
+      SCHEDULER_ENABLED: ${SCHEDULER_ENABLED:-true}
       EVM_ADDRESSES: ${EVM_ADDRESSES:-}
       HYPERLIQUID_ADDRESSES: ${HYPERLIQUID_ADDRESSES:-}
       SOL_ADDRESSES: ${SOL_ADDRESSES}

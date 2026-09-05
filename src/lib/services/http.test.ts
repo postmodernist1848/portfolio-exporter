@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
-import { getJson } from './http';
+import { getJson, withCollectionDeadline } from './http';
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -8,6 +8,19 @@ afterEach(() => {
 });
 
 describe('HTTP client', () => {
+  it('cancels a long Retry-After when the collection deadline expires', async () => {
+    vi.useFakeTimers();
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response('', { status: 429, headers: { 'Retry-After': '3600' } })
+    );
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const result = withCollectionDeadline(() => getJson('https://provider.test'), 100);
+    const assertion = expect(result).rejects.toMatchObject({ name: 'AbortError' });
+    await vi.advanceTimersByTimeAsync(100);
+    await assertion;
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
   it('does not retry non-retryable 4xx responses', async () => {
     const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
       new Response('secret response', { status: 401 })
@@ -20,7 +33,6 @@ describe('HTTP client', () => {
   });
 
   it('retries a 5xx response and never logs the response body', async () => {
-    vi.useFakeTimers();
     const fetchMock = vi.spyOn(globalThis, 'fetch')
       .mockResolvedValueOnce(new Response('sensitive payload', { status: 503 }))
       .mockResolvedValueOnce(new Response('{"ok":true}', { status: 200 }));
@@ -33,7 +45,6 @@ describe('HTTP client', () => {
       z.object({ ok: z.boolean() }),
       { attempts: 2 }
     );
-    await vi.runAllTimersAsync();
     await expect(promise).resolves.toEqual({ ok: true });
     expect(fetchMock).toHaveBeenCalledTimes(2);
     expect(JSON.stringify(warn.mock.calls)).not.toContain('sensitive payload');

@@ -1,14 +1,13 @@
 import {
   getLatestSnapshot,
-  getLatestSuccessfulComponent,
-  saveSnapshot
+  getLatestSuccessfulComponent
 } from '@/lib/db/portfolio-repository';
 import { getPortfolioSources } from '@/lib/sources';
+import { collectWithDatabaseLock } from '@/lib/db/collection-lock';
+import { withCollectionDeadline } from './http';
 import type { PortfolioSnapshot, SourceSnapshot } from '@/types/portfolio';
 
-const PUBLIC_COOLDOWN_MS = 60_000;
-let inFlight: Promise<PortfolioSnapshot> | null = null;
-let lastCompletedAt = 0;
+let inFlight: Promise<CollectionResponse> | null = null;
 
 export type CollectionResponse = {
   state: 'completed' | 'in_progress' | 'cooldown';
@@ -73,7 +72,7 @@ async function performCollection(): Promise<PortfolioSnapshot> {
     (component) => component.status === 'ok' || component.status === 'partial'
   ).length;
   const status = enabled.some((component) => component.status !== 'ok') ? 'partial' : 'complete';
-  const snapshot: PortfolioSnapshot = {
+  return {
     capturedAt,
     totalRub: components.reduce((sum, component) => sum + component.totalRub, 0),
     status,
@@ -82,14 +81,11 @@ async function performCollection(): Promise<PortfolioSnapshot> {
     errorSourceCount,
     components
   };
-  await saveSnapshot(snapshot);
-  return snapshot;
 }
 
-function startCollection(): Promise<PortfolioSnapshot> {
+function startCollection(): Promise<CollectionResponse> {
   if (inFlight) return inFlight;
-  inFlight = performCollection().finally(() => {
-    lastCompletedAt = Date.now();
+  inFlight = collectWithDatabaseLock(() => withCollectionDeadline(performCollection)).finally(() => {
     inFlight = null;
   });
   return inFlight;
@@ -99,17 +95,10 @@ export async function requestPublicCollection(): Promise<CollectionResponse> {
   if (inFlight) {
     return { state: 'in_progress', snapshot: await getLatestSnapshot() };
   }
-  if (Date.now() - lastCompletedAt < PUBLIC_COOLDOWN_MS) {
-    return { state: 'cooldown', snapshot: await getLatestSnapshot() };
-  }
-  const snapshot = await startCollection();
-  return { state: 'completed', snapshot };
+  const result = await startCollection();
+  return { ...result, snapshot: result.snapshot ?? await getLatestSnapshot() };
 }
 
-export async function runScheduledCollection(): Promise<PortfolioSnapshot> {
-  return startCollection();
-}
-
-export function isCollectionInProgress(): boolean {
-  return inFlight !== null;
+export async function runScheduledCollection(): Promise<PortfolioSnapshot | null> {
+  return (await startCollection()).snapshot;
 }

@@ -7,7 +7,7 @@ let started = false;
 async function runTick(label: string): Promise<void> {
   try {
     const snapshot = await runScheduledCollection();
-    console.info('[scheduler] snapshot saved', { label, capturedAt: snapshot.capturedAt });
+    console.info('[scheduler] collection finished', { label, capturedAt: snapshot?.capturedAt });
   } catch (error) {
     console.error('[scheduler] collection failed', {
       label,
