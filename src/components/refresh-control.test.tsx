@@ -24,6 +24,12 @@ describe('refresh control', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Обновить' }));
     expect(screen.getByRole('button')).toBeDisabled();
+    expect(globalThis.fetch).toHaveBeenCalledWith('/api/collect', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: '{}'
+    });
     complete(new Response('{"state":"completed"}', { status: 200 }));
 
     await waitFor(() => expect(screen.getByText('Данные обновлены')).toBeInTheDocument());

@@ -20,7 +20,9 @@
   - БКС по счетам и дедуплицированным позициям.
   - OKX по категориям, если их возвращает Asset Valuation API.
 
-Dashboard публичный: сохранённые wallet-адреса и названия инвестиционных счетов отображаются без маскирования.
+Dashboard и API защищены HTTP Basic Auth для одного пользователя. Сохранённые
+wallet-адреса и названия инвестиционных счетов отображаются без маскирования
+после входа.
 
 ## Архитектура расширения
 
@@ -36,6 +38,7 @@ Dashboard публичный: сохранённые wallet-адреса и на
 ```bash
 npm ci
 cp .env.example .env
+# задайте PORTFOLIO_AUTH_USERNAME и PORTFOLIO_AUTH_PASSWORD в .env
 npm run db:generate
 npm run db:push
 npm run dev
@@ -61,7 +64,21 @@ npm run dev
 3. Добавьте серверные переменные из `.env.example` в Production environment:
    `DATABASE_URL`, нужные ключи провайдеров и адреса кошельков. Не добавляйте
    префикс `NEXT_PUBLIC_` к секретам. Все три переменные OKX задаются вместе.
+   Обязательно задайте `PORTFOLIO_AUTH_USERNAME` и длинный случайный
+   `PORTFOLIO_AUTH_PASSWORD`: без обоих значений приложение закрывает dashboard
+   и API ответом HTTP 503. Эти переменные проверяются во время запроса, а не
+   встраиваются в клиентский bundle.
    Для Preview используйте отдельную БД и тестовые настройки, не production.
+
+   Из корня связанного с Vercel репозитория credentials можно сгенерировать и
+   записать в Production environment одной командой:
+
+   ```bash
+   npm run auth:vercel
+   ```
+
+   Команда выведет сгенерированный пароль один раз для переноса в настройки
+   HTTP Authentication cron-job.org. Не сохраняйте вывод в логи или shell history.
 4. Перед первым запуском подготовьте схему в выбранной БД: с соответствующими
    переменными подключения выполните `npm run db:generate` и `npm run db:push`.
    Команда build намеренно не меняет БД. Для переноса существующей истории
@@ -72,13 +89,16 @@ npm run dev
    | --- | --- |
    | URL | `https://YOUR-PROJECT.vercel.app/api/collect?background=1` |
    | Advanced → Request method | `POST` |
-   | Request body | пустое |
+   | Advanced → Authentication | HTTP Basic с `PORTFOLIO_AUTH_USERNAME` и `PORTFOLIO_AUTH_PASSWORD` |
+   | Advanced → Headers | `Content-Type: application/json` |
+   | Request body | `{}` |
    | Schedule | каждый час, `0 * * * *` |
    | Timezone | `Europe/Moscow` |
    | Save responses | по желанию; ответ содержит только `state` |
 
    Используйте HTTPS-адрес deployment без порта `:3000` и путь
-   `/api/collect?background=1`. Endpoint принимает только POST.
+   `/api/collect?background=1`. Endpoint принимает только авторизованный POST
+   с JSON content type. Не помещайте логин или пароль в URL.
    Для self-hosted Docker с внешним cron задайте `SCHEDULER_ENABLED=false`.
    При переносе с Docker на Vercel отключите сбор на прежнем хосте
    после переключения production.
@@ -101,10 +121,14 @@ snapshot. Потеря соединения/завершение транзак�
 
 `POST /api/collect` без параметра `background=1` возвращает результат
 синхронно и используется кнопкой обновления на dashboard.
-Endpoint публичный: ключи провайдеров хранятся в приложении и не требуются
-для настройки cron-job.org.
-Если Vercel Deployment Protection закрывает production URL, настройте его
-доступность для cron (либо отдельный automation bypass header в Advanced).
+Endpoint повторно проверяет Basic Auth непосредственно перед запуском сбора,
+даже несмотря на общую защиту приложения. cron-job.org хранит эти реквизиты в
+настройках HTTP Authentication; ключи провайдеров ему не передаются.
+
+Vercel Deployment Protection не требуется: встроенная защита приложения
+работает и на Hobby production domain. Если дополнительно включить Deployment
+Protection для deployment URL, cron потребуется отдельный automation bypass
+header поверх Basic Auth.
 
 Ссылки: [Next.js after](https://nextjs.org/docs/app/api-reference/functions/after),
 [Vercel duration](https://vercel.com/docs/functions/configuring-functions/duration),
@@ -116,6 +140,7 @@ Endpoint публичный: ключи провайдеров хранятся 
 
 ```bash
 cp .env.example .env
+# задайте PORTFOLIO_AUTH_USERNAME и PORTFOLIO_AUTH_PASSWORD в .env
 docker compose up -d
 ```
 
@@ -236,9 +261,9 @@ USDC, Alchemy и Hyperliquid. Проверяется время обновлен
 
 ### Ручной триггер
 
-- `POST /api/collect`
+- `POST /api/collect` с HTTP Basic Auth, `Content-Type: application/json` и телом `{}`
 
-Одновременные запросы объединяются в один сбор; публичный ручной запуск имеет cooldown 60 секунд.
+Одновременные запросы объединяются в один сбор; ручной запуск имеет cooldown 60 секунд.
 
 ## Эндпоинты
 
@@ -247,6 +272,11 @@ USDC, Alchemy и Hyperliquid. Проверяется время обновлен
 - `GET /api/portfolio/history`
 - `GET /api/portfolio/history/:sourceId`
 - `POST /api/collect`
+
+Все страницы и API требуют HTTP Basic Auth. Браузер запрашивает логин и пароль
+при первом обращении к origin и повторно использует их для навигации и кнопки
+«Обновить». Новый запрос появится после очистки/забывания credentials, смены
+пароля или перехода на другой hostname deployment.
 
 ## Про исторические данные: оптимальный вариант
 

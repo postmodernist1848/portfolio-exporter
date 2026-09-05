@@ -12,7 +12,12 @@ export function RefreshControl() {
     setState('loading');
     setMessage('Обновляем данные…');
     try {
-      const response = await fetch('/api/collect', { method: 'POST' });
+      const response = await fetch('/api/collect', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: '{}'
+      });
       const body = await response.json() as { state?: 'completed' | 'in_progress' | 'cooldown' };
       if (!response.ok) throw new Error('Collection failed');
       const messages = {

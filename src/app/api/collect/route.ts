@@ -1,4 +1,5 @@
 import { after, NextResponse } from 'next/server';
+import { requireBasicAuth } from '@/lib/auth/basic-auth';
 import { requestPublicCollection } from '@/lib/services/collection-coordinator';
 
 export const dynamic = 'force-dynamic';
@@ -6,6 +7,11 @@ export const runtime = 'nodejs';
 export const maxDuration = 300;
 
 export async function POST(request: Request) {
+  const authenticationError = requireBasicAuth(request);
+  if (authenticationError) return authenticationError;
+  if (request.headers.get('content-type')?.split(';', 1)[0].trim().toLowerCase() !== 'application/json') {
+    return NextResponse.json({ error: 'Content-Type must be application/json' }, { status: 415 });
+  }
   if (new URL(request.url).searchParams.get('background') === '1') {
     after(async () => {
       try {
