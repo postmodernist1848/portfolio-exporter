@@ -114,6 +114,50 @@ describe('Alchemy EVM adapter', () => {
     expect(result.totalUsd).toBe(0);
   });
 
+  it('accepts null native-token decimals and applies the EVM native precision', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(jsonResponse({
+      data: {
+        tokens: [{
+          address: '0xabc',
+          network: 'eth-mainnet',
+          tokenAddress: null,
+          tokenBalance: '0xde0b6b3a7640000',
+          tokenMetadata: { decimals: null, symbol: null, name: null, logo: null },
+          tokenPrices: [{ currency: 'usd', value: '2000', lastUpdatedAt: '2026-09-05T00:00:00Z' }]
+        }]
+      }
+    }));
+
+    const result = await fetchAlchemyEvmWallets(['0xabc']);
+
+    expect(result.incomplete).toBe(false);
+    expect(result.wallets[0].chains).toEqual([
+      { chain: 'eth', totalUsd: 2000 },
+      { chain: 'arbitrum', totalUsd: 0 }
+    ]);
+    expect(result.wallets[0].excludedAssetCount).toBe(0);
+  });
+
+  it('excludes an ERC-20 token when its decimals are null', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(jsonResponse({
+      data: {
+        tokens: [{
+          address: '0xabc',
+          network: 'arb-mainnet',
+          tokenAddress: '0xtoken',
+          tokenBalance: '0x1',
+          tokenMetadata: { decimals: null },
+          tokenPrices: [{ currency: 'usd', value: '1', lastUpdatedAt: '2026-09-05T00:00:00Z' }]
+        }]
+      }
+    }));
+
+    const result = await fetchAlchemyEvmWallets(['0xabc']);
+
+    expect(result.totalUsd).toBe(0);
+    expect(result.wallets[0].excludedAssetCount).toBe(1);
+  });
+
   it('marks token-level provider errors as incomplete', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(jsonResponse({
       data: {

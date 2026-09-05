@@ -44,6 +44,23 @@ function addresses(raw?: string): string[] {
   return raw?.split(',').map((value) => value.trim()).filter(Boolean) ?? [];
 }
 
+export function safeCryptoFailure(error: unknown): {
+  errorType: string;
+  issues?: Array<{ code: string; path: string }>;
+} {
+  if (error instanceof z.ZodError) {
+    return {
+      errorType: 'validation',
+      issues: error.issues.map((issue) => ({
+        code: issue.code,
+        path: issue.path.map(String).join('.') || '<root>'
+      }))
+    };
+  }
+  if (error instanceof Error) return { errorType: error.name || 'Error' };
+  return { errorType: 'unknown' };
+}
+
 async function fetchBtcBreakdown(
   wallets: string[],
   pricesPromise: ReturnType<typeof fetchCryptoMarketPrices>
@@ -211,6 +228,13 @@ export class CryptoSource implements PortfolioSource {
       });
     }
     const settled = await Promise.allSettled(tasks.map((task) => task.promise));
+    settled.forEach((result, index) => {
+      if (result.status === 'fulfilled') return;
+      console.error('[source:crypto] component failed', {
+        component: tasks[index].key,
+        ...safeCryptoFailure(result.reason)
+      });
+    });
     const succeeded = settled.filter((item) => item.status === 'fulfilled');
     if (!succeeded.length) throw new Error('All configured crypto components failed');
 

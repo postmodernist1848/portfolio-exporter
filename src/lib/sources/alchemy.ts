@@ -17,7 +17,7 @@ const tokenSchema = z.object({
   tokenAddress: z.string().nullable(),
   tokenBalance: z.string().regex(/^0x[0-9a-f]+$/i),
   tokenMetadata: z.object({
-    decimals: z.number().int().nonnegative(),
+    decimals: z.number().int().nonnegative().nullable(),
     logo: z.string().nullable().optional(),
     name: z.string().nullable().optional(),
     symbol: z.string().nullable().optional()
@@ -78,8 +78,10 @@ function finiteTokenValue(token: AlchemyToken): number | null {
   if (token.error || !token.tokenMetadata) return null;
   const price = token.tokenPrices?.find((item) => item.currency.toLowerCase() === 'usd');
   if (!price) return null;
+  const decimals = token.tokenMetadata.decimals ?? (token.tokenAddress === null ? 18 : null);
+  if (decimals === null) return null;
   const priceUsd = Number(price.value);
-  const balance = Number(BigInt(token.tokenBalance)) / 10 ** token.tokenMetadata.decimals;
+  const balance = Number(BigInt(token.tokenBalance)) / 10 ** decimals;
   const value = balance * priceUsd;
   return Number.isFinite(value) && value >= 0 ? value : null;
 }
