@@ -45,13 +45,13 @@ function CryptoDetails({ breakdown }: { breakdown: Extract<SourceBreakdown, { ki
           <div className="breakdown-heading">
             <div>
               <h4>EVM</h4>
-              <p>Moralis Wallet Net Worth: Ethereum + Arbitrum, spam и непроверенные контракты исключены</p>
+              <p>Alchemy Portfolio API: балансы Ethereum + Arbitrum</p>
             </div>
             <span>USD/RUB: {number.format(breakdown.evm.usdRubRate)}{breakdown.evm.rateStale ? ' · устарел' : ''}</span>
           </div>
           <div className="table-scroll">
             <table className="breakdown-table">
-              <thead><tr><th>Адрес</th><th>По сетям</th><th>Оценка Moralis</th><th>Стоимость</th></tr></thead>
+              <thead><tr><th>Адрес</th><th>По сетям</th><th>Оценка Alchemy</th><th>Стоимость</th></tr></thead>
               <tbody>{breakdown.evm.wallets.map((wallet) => (
                 <tr key={wallet.address}>
                   <td className="address-cell">{wallet.address}</td>
@@ -68,7 +68,12 @@ function CryptoDetails({ breakdown }: { breakdown: Extract<SourceBreakdown, { ki
                     )}
                   </td>
                   <td>{usd.format(wallet.totalUsd)}</td>
-                  <td>{rub.format(wallet.totalRub)}</td>
+                  <td>
+                    {rub.format(wallet.totalRub)}
+                    {(wallet.excludedAssetCount ?? 0) > 0 && (
+                      <small>Без подтверждённой USD-цены: {wallet.excludedAssetCount}</small>
+                    )}
+                  </td>
                 </tr>
               ))}</tbody>
             </table>

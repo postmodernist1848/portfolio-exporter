@@ -37,7 +37,7 @@ describe('source breakdown', () => {
     }} />);
 
     expect(screen.getByText('Blockstream API', { exact: false })).toBeInTheDocument();
-    expect(screen.getByText('Moralis Wallet Net Worth', { exact: false })).toBeInTheDocument();
+    expect(screen.getByText('Alchemy Portfolio API', { exact: false })).toBeInTheDocument();
     expect(screen.getByText('bc1q-public-address')).toBeInTheDocument();
     expect(screen.getByText('0xpublic')).toBeInTheDocument();
     expect(screen.getByText('Arbitrum:', { exact: false })).toBeInTheDocument();

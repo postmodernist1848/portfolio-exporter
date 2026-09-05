@@ -18,6 +18,7 @@ export type CryptoBreakdown = {
       chains: Array<{ chain: string; totalUsd: number }>;
       unsupportedChains: string[];
       unavailableChains: string[];
+      excludedAssetCount?: number;
     }>;
   };
   solana?: {

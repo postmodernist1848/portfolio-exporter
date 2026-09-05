@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { env } from '@/lib/config/env';
 import { getJson } from '@/lib/services/http';
+import { fetchAlchemyEvmWallets } from './alchemy';
 import { fetchCryptoMarketPrices } from './currency';
 import { fetchHyperliquidBreakdown } from './hyperliquid';
 import type { PortfolioSource, SourceCollectionResult } from './types';
@@ -8,7 +9,6 @@ import type { CryptoBreakdown } from '@/types/portfolio';
 
 const DEFAULT_SOLANA_RPC_URL = 'https://api.mainnet-beta.solana.com';
 const SOLANA_USDC_MINT = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
-export const MORALIS_EVM_CHAINS = ['eth', 'arbitrum'] as const;
 
 const btcSchema = z.object({
   chain_stats: z.object({
@@ -39,30 +39,9 @@ const solTokensSchema = z.object({
   }),
   error: z.never().optional()
 });
-const moralisSchema = z.object({
-  total_networth_usd: z.union([z.string(), z.number()]).transform(Number).pipe(z.number().finite()),
-  chains: z.array(z.object({
-    chain: z.string(),
-    networth_usd: z.union([z.string(), z.number()]).transform(Number).pipe(z.number().finite())
-  })),
-  unsupported_chain_ids: z.array(z.string()).optional().default([]),
-  unavailable_chains: z.array(z.object({ chain_id: z.string() })).optional().default([])
-});
 
 function addresses(raw?: string): string[] {
   return raw?.split(',').map((value) => value.trim()).filter(Boolean) ?? [];
-}
-
-export function buildMoralisNetWorthUrl(address: string): string {
-  const url = new URL(
-    `https://deep-index.moralis.io/api/v2.2/wallets/${encodeURIComponent(address)}/net-worth`
-  );
-  MORALIS_EVM_CHAINS.forEach((chain, index) => {
-    url.searchParams.set(`chains[${index}]`, chain);
-  });
-  url.searchParams.set('exclude_spam', 'true');
-  url.searchParams.set('exclude_unverified_contracts', 'true');
-  return url.toString();
 }
 
 async function fetchBtcBreakdown(
@@ -162,35 +141,21 @@ async function fetchEvmBreakdown(
 ): Promise<{
   totalRub: number;
   staleRate: boolean;
+  incomplete: boolean;
   breakdown: NonNullable<CryptoBreakdown['evm']>;
 }> {
-  if (!env.MORALIS_API_KEY) throw new Error('EVM provider is not configured');
-  const [values, prices] = await Promise.all([
-    Promise.all(wallets.map((address) => getJson(
-      buildMoralisNetWorthUrl(address),
-      { headers: { 'X-API-Key': env.MORALIS_API_KEY! } },
-      moralisSchema,
-      { provider: 'moralis', operation: 'evm-net-worth' }
-    ))),
+  const [evm, prices] = await Promise.all([
+    fetchAlchemyEvmWallets(wallets),
     pricesPromise
   ]);
-  const rows = values.map((value, index) => {
-    const totalUsd = Number(value.total_networth_usd);
-    return {
-      address: wallets[index],
-      totalUsd,
-      totalRub: totalUsd * prices.usdRubRate,
-      chains: value.chains.map((chain) => ({
-        chain: chain.chain,
-        totalUsd: Number(chain.networth_usd)
-      })),
-      unsupportedChains: value.unsupported_chain_ids ?? [],
-      unavailableChains: (value.unavailable_chains ?? []).map((chain) => chain.chain_id)
-    };
-  });
+  const rows = evm.wallets.map((wallet) => ({
+    ...wallet,
+    totalRub: wallet.totalUsd * prices.usdRubRate
+  }));
   return {
     totalRub: rows.reduce((sum, row) => sum + row.totalRub, 0),
     staleRate: prices.stale,
+    incomplete: evm.incomplete,
     breakdown: {
       usdRubRate: prices.usdRubRate,
       rateStale: prices.stale,

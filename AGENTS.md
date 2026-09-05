@@ -81,9 +81,9 @@
 
 - `BTC_ADDRESSES`: Blockstream address state. BTC balance is funded minus spent
   transaction outputs.
-- `EVM_ADDRESSES`: Moralis Wallet Net Worth for exactly Ethereum and Arbitrum.
-  Moralis failure or missing configuration must not disable BTC, Solana, or
-  Hyperliquid collection.
+- `EVM_ADDRESSES`: Alchemy Portfolio API for native and ERC-20 balances on exactly
+  Ethereum and Arbitrum. Alchemy failure or missing configuration must not
+  disable BTC, Solana, or Hyperliquid collection.
 - `SOL_ADDRESSES`: Solana JSON-RPC native SOL plus all accounts for the mainnet
   USDC mint `EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v`.
 - `HYPERLIQUID_ADDRESSES`: separate Hyperliquid master addresses, never inferred
@@ -91,7 +91,7 @@
   wallet addresses.
 - Crypto subcomponents run independently with `Promise.allSettled` semantics.
 - CoinGecko supplies BTC/RUB, BTC/USD, and SOL/RUB in one timestamped snapshot.
-  Implied USD/RUB is `bitcoin.rub / bitcoin.usd` and converts Moralis,
+  Implied USD/RUB is `bitcoin.rub / bitcoin.usd` and converts Alchemy,
   Hyperliquid, and Solana USDC values. Preserve last-known-good prices as stale.
 - Hyperliquid final value comes from the latest normal `day.accountValueHistory`
   point returned by `type: portfolio`. Spot, perpetual, vault, staking, mode, and

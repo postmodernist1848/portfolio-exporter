@@ -122,7 +122,7 @@ Endpoint подписывается read-only API-ключом. Конфигур
 | Секция | Endpoint | Использование |
 | --- | --- | --- |
 | Bitcoin | `GET https://blockstream.info/api/address/{address}` | On-chain баланс BTC: `funded_txo_sum - spent_txo_sum` |
-| EVM | `GET https://deep-index.moralis.io/api/v2.2/wallets/{address}/net-worth?chains[0]=eth&chains[1]=arbitrum&exclude_spam=true&exclude_unverified_contracts=true` | Net worth адреса в USD по Ethereum и Arbitrum |
+| EVM | `POST https://api.g.alchemy.com/data/v1/{key}/assets/tokens/by-address` | Нативные и ERC-20 балансы адреса в USD по Ethereum и Arbitrum |
 | Solana SOL | `POST {SOLANA_RPC_URL}` с методом `getBalance` | Нативный баланс SOL |
 | Solana USDC | `POST {SOLANA_RPC_URL}` с методом `getTokenAccountsByOwner` | Все SPL-счета основного USDC mint и их суммарный баланс |
 | Цены и конвертация в RUB | `GET https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,solana&vs_currencies=rub,usd&include_last_updated_at=true` | BTC/RUB, BTC/USD, SOL/RUB и расчётный USD/RUB |
@@ -131,11 +131,11 @@ Solana RPC по умолчанию: `https://api.mainnet-beta.solana.com`. Ег�
 через `SOLANA_RPC_URL`. Используемый USDC mint:
 `EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v`.
 
-Moralis требует `MORALIS_API_KEY`. Адреса задаются в `BTC_ADDRESSES`,
+Alchemy требует `ALCHEMY_API_KEY`. Адреса задаются в `BTC_ADDRESSES`,
 `EVM_ADDRESSES`, `SOL_ADDRESSES` и `HYPERLIQUID_ADDRESSES`.
 
 Implied USD/RUB рассчитывается как `bitcoin.rub / bitcoin.usd` и используется для
-USDC, Moralis и Hyperliquid. Проверяется время обновления цен; при временном сбое
+USDC, Alchemy и Hyperliquid. Проверяется время обновления цен; при временном сбое
 используется последний успешный снимок с пометкой stale.
 
 ### Hyperliquid внутри крипто-портфеля
