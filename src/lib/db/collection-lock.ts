@@ -1,5 +1,5 @@
 import { prisma } from './client';
-import { saveSnapshot } from './portfolio-repository';
+import { purgeExpiredPartialSnapshots, saveSnapshot } from './portfolio-repository';
 import type { PortfolioSnapshot } from '@/types/portfolio';
 
 // Transaction-scoped locks also work with transaction-mode PostgreSQL poolers.
@@ -22,6 +22,7 @@ export async function collectWithDatabaseLock(collect: () => Promise<PortfolioSn
     const snapshot = await collect();
     // Persist under the same lock: a timed-out transaction cannot publish a result.
     await saveSnapshot(snapshot, tx);
+    await purgeExpiredPartialSnapshots(new Date(), tx);
     return { state: 'completed' as const, snapshot };
   }, { maxWait: 5_000, timeout: 280_000 });
 }

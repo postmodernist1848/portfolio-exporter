@@ -1,11 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const mocks = vi.hoisted(() => ({ query: vi.fn(), save: vi.fn() }));
+const mocks = vi.hoisted(() => ({ query: vi.fn(), save: vi.fn(), purge: vi.fn() }));
 vi.mock('./client', () => ({ prisma: {
   $transaction: async (callback: (tx: unknown) => Promise<unknown>) =>
     callback({ $queryRaw: mocks.query })
 } }));
-vi.mock('./portfolio-repository', () => ({ saveSnapshot: mocks.save }));
+vi.mock('./portfolio-repository', () => ({
+  saveSnapshot: mocks.save,
+  purgeExpiredPartialSnapshots: mocks.purge
+}));
 import { collectWithDatabaseLock } from './collection-lock';
 
 describe('database collection coordination', () => {
@@ -34,6 +37,7 @@ describe('database collection coordination', () => {
     const result = await collectWithDatabaseLock(async () => snapshot);
     expect(result).toEqual({ state: 'completed', snapshot });
     expect(mocks.save).toHaveBeenCalledWith(snapshot, { $queryRaw: mocks.query });
+    expect(mocks.purge).toHaveBeenCalledWith(expect.any(Date), { $queryRaw: mocks.query });
   });
 
   it('propagates failures without saving a false successful snapshot', async () => {
@@ -41,5 +45,6 @@ describe('database collection coordination', () => {
     await expect(collectWithDatabaseLock(async () => { throw new Error('failure'); }))
       .rejects.toThrow('failure');
     expect(mocks.save).not.toHaveBeenCalled();
+    expect(mocks.purge).not.toHaveBeenCalled();
   });
 });

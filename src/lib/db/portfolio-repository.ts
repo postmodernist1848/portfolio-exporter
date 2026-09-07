@@ -12,6 +12,8 @@ import type {
 
 export type HistoryRange = '24h' | '7d' | '30d' | 'all';
 
+const PARTIAL_SNAPSHOT_RETENTION_MS = 24 * 60 * 60 * 1000;
+
 function decimalToNumber(value: Prisma.Decimal | number): number {
   return typeof value === 'number' ? value : Number(value.toString());
 }
@@ -107,6 +109,20 @@ export async function saveSnapshot(
       }
     }
   });
+}
+
+export async function purgeExpiredPartialSnapshots(
+  now = new Date(),
+  db: Pick<Prisma.TransactionClient, 'portfolioSnapshot'> = prisma
+): Promise<number> {
+  const cutoff = new Date(now.getTime() - PARTIAL_SNAPSHOT_RETENTION_MS);
+  const result = await db.portfolioSnapshot.deleteMany({
+    where: {
+      status: 'partial',
+      capturedAt: { lt: cutoff }
+    }
+  });
+  return result.count;
 }
 
 export async function getLatestSnapshot(): Promise<PortfolioSnapshot | null> {

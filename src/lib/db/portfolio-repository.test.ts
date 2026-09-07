@@ -2,9 +2,10 @@ import { describe, expect, it, vi } from 'vitest';
 
 const findMany = vi.hoisted(() => vi.fn());
 const upsert = vi.hoisted(() => vi.fn());
+const deleteMany = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/db/client', () => ({
   prisma: {
-    portfolioSnapshot: { findMany, upsert }
+    portfolioSnapshot: { findMany, upsert, deleteMany }
   }
 }));
 
@@ -22,6 +23,21 @@ describe('portfolio history repository', () => {
       take: 2
     }));
     expect(result.map((point) => point.totalRub)).toEqual([200, 300]);
+  });
+
+  it('purges only partial snapshots older than one day', async () => {
+    deleteMany.mockResolvedValue({ count: 3 });
+    const { purgeExpiredPartialSnapshots } = await import('./portfolio-repository');
+
+    const count = await purgeExpiredPartialSnapshots(new Date('2026-09-07T12:30:00.000Z'));
+
+    expect(deleteMany).toHaveBeenCalledWith({
+      where: {
+        status: 'partial',
+        capturedAt: { lt: new Date('2026-09-06T12:30:00.000Z') }
+      }
+    });
+    expect(count).toBe(3);
   });
 
   it('uses deleteMany only in the update branch of snapshot upsert', async () => {
