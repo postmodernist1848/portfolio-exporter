@@ -6,6 +6,11 @@ import type { BcsBreakdown } from '@/types/portfolio';
 
 const BCS_AUTH_URL = 'https://be.broker.ru/trade-api-keycloak/realms/tradeapi/protocol/openid-connect/token';
 const BCS_PORTFOLIO_URL = 'https://be.broker.ru/trade-api-bff-portfolio/api/v1/portfolio';
+const bcsPositionSchema = z.record(z.string(), z.unknown());
+const bcsPortfolioSchema = z.union([
+  z.array(bcsPositionSchema),
+  z.object({ positions: z.array(bcsPositionSchema) }).passthrough()
+]);
 
 function logFetchError(scope: string, error: unknown): void {
   if (error instanceof Error) {
@@ -100,12 +105,12 @@ function toNumber(value: unknown): number | null {
 function parsePayload(value: unknown): unknown {
   if (typeof value === 'string') {
     try {
-      return JSON.parse(value) as unknown;
+      return bcsPortfolioSchema.parse(JSON.parse(value));
     } catch {
-      return { rawText: value };
+      throw new Error('BCS portfolio response is not valid JSON portfolio data');
     }
   }
-  return value;
+  return bcsPortfolioSchema.parse(value);
 }
 
 function getPositions(payload: unknown): Array<Record<string, unknown>> {
@@ -123,7 +128,13 @@ function getPositions(payload: unknown): Array<Record<string, unknown>> {
   return [];
 }
 
-function buildBcsAccounts(
+function settlementRank(term: unknown): number | null {
+  if (typeof term !== 'string') return null;
+  const match = /^T(\d+)$/i.exec(term.trim());
+  return match ? Number(match[1]) : null;
+}
+
+export function buildBcsAccounts(
   positions: Array<Record<string, unknown>>
 ): BcsBreakdown['accounts'] {
   const deduplicated = new Map<string, {
@@ -133,6 +144,7 @@ function buildBcsAccounts(
     instrumentType?: string;
     quantity?: number;
     totalRub: number;
+    settlementRank: number | null;
   }>();
 
   for (const position of positions) {
@@ -153,7 +165,8 @@ function buildBcsAccounts(
       ticker,
       instrumentType,
       upperType,
-      expireDate
+      expireDate,
+      String(position.board ?? '')
     ].join('|');
 
     let rubValue = toNumber(position.currentValueRub);
@@ -181,16 +194,25 @@ function buildBcsAccounts(
       ) || undefined,
       instrumentType: instrumentType || upperType || undefined,
       quantity: toNumber(position.quantity ?? position.balance ?? position.qty) ?? undefined,
-      totalRub: rubValue
+      totalRub: rubValue,
+      settlementRank: settlementRank(position.term)
     };
     const existing = deduplicated.get(key);
-    if (existing === undefined || Math.abs(rubValue) > Math.abs(existing.totalRub)) {
+    const isLaterSettlement = row.settlementRank !== null &&
+      (existing?.settlementRank === null || existing === undefined || row.settlementRank > existing.settlementRank);
+    const isSameOrUnknownSettlement = existing !== undefined &&
+      row.settlementRank === existing.settlementRank;
+    if (existing === undefined || isLaterSettlement ||
+      (isSameOrUnknownSettlement && Math.abs(rubValue) > Math.abs(existing.totalRub))) {
       deduplicated.set(key, row);
     }
   }
 
   const accounts = new Map<string, BcsBreakdown['accounts'][number]>();
   for (const position of deduplicated.values()) {
+    if ((position.quantity === undefined || position.quantity === 0) && position.totalRub === 0) {
+      continue;
+    }
     const account = accounts.get(position.account) ?? {
       account: position.account,
       totalRub: 0,
