@@ -5,6 +5,7 @@ const rub = new Intl.NumberFormat('ru-RU', {
   currency: 'RUB',
   maximumFractionDigits: 2
 });
+const price = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 2 });
 const number = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 8 });
 const usd = new Intl.NumberFormat('ru-RU', {
   style: 'currency',
@@ -25,6 +26,18 @@ function CryptoDetails({ breakdown }: { breakdown: Extract<SourceBreakdown, { ki
             <div><h4>Bitcoin</h4><p>Баланс адреса через Blockstream API</p></div>
             <span>BTC/RUB: {rub.format(breakdown.btc.priceRub)}</span>
           </div>
+          {breakdown.btc.costBasis && (
+            <div className="breakdown-note">
+              <p>Средняя цена с учётом хеджей и комиссий: {price.format(breakdown.btc.costBasis.averagePriceUsdt)} USDT/BTC</p>
+              <p>Себестоимость BTC: {rub.format(breakdown.btc.costBasis.costBasisRub)}</p>
+              <p>Нереализованный P&amp;L BTC: {rub.format(breakdown.btc.costBasis.unrealizedPnlRub)}
+                {breakdown.btc.costBasis.unrealizedPnlPercent !== null && (
+                  <> ({price.format(breakdown.btc.costBasis.unrealizedPnlPercent)}%)</>
+                )}
+              </p>
+              <p>Расчёт по текущему курсу USD/RUB, при USDT ≈ USD. Только BTC на указанных адресах.</p>
+            </div>
+          )}
           <div className="table-scroll">
             <table className="breakdown-table">
               <thead><tr><th>Адрес</th><th>BTC</th><th>Стоимость</th></tr></thead>

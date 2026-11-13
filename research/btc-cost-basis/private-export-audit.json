@@ -1,0 +1,100 @@
+{
+  "source": "User-supplied OKX funding, spot-only and combined-trading exports",
+  "export_timezone": "UTC+03:00",
+  "spot_and_combined_btc_bill_sets_identical": true,
+  "btc_spot_balance_rows": 988,
+  "btc_spot_actions": {
+    "Sell": 452,
+    "Buy": 536
+  },
+  "funding_btc_types": {
+    "Simple Earn redemption": 13,
+    "Simple Earn subscription": 17,
+    "Received from sub-account": 1,
+    "Transferred to sub-account": 1,
+    "Withdrawal canceled": 1,
+    "Withdrawal": 2,
+    "Flash Earn redemption": 1,
+    "Flash Earn subscription": 1,
+    "Received": 1
+  },
+  "btc_withdrawal_bills": [
+    {
+      "time_utc": "2026-02-27T13:56:20+00:00",
+      "kind": "Withdrawal canceled",
+      "amount_btc": "0.00333067"
+    },
+    {
+      "time_utc": "2026-02-27T13:56:15+00:00",
+      "kind": "Withdrawal",
+      "amount_btc": "-0.00333067"
+    },
+    {
+      "time_utc": "2026-01-30T06:00:46+00:00",
+      "kind": "Withdrawal",
+      "amount_btc": "-0.00240159"
+    }
+  ],
+  "interpretation": [
+    "Funding CSV is a cash-bill ledger; it contains no blockchain withdrawal hashes or destinations.",
+    "February withdrawal was canceled. January withdrawal is outside the tracked two-address history.",
+    "The three previously unassigned BTC receipts match Hyperliquid sends and the supplied HL CSV instead.",
+    "Do not add unrelated OKX BTC buys or futures to this wallet's acquisition cost."
+  ],
+  "hl_csv_btc_rows": [
+    {
+      "displayed_time": "08/06/2026 - 01:34:13",
+      "action": "withdraw",
+      "source": "trading",
+      "destination": "bitcoin",
+      "account_value_change": "-0.00033714  BTC",
+      "displayed_fee": "0.0000025  BTC"
+    },
+    {
+      "displayed_time": "21/08/2026 - 12:15:42",
+      "action": "deposit",
+      "source": "bitcoin",
+      "destination": "trading",
+      "account_value_change": "0.00097558  BTC",
+      "displayed_fee": "0.00002442  BTC"
+    },
+    {
+      "displayed_time": "07/09/2026 - 07:36:27",
+      "action": "send",
+      "source": "trading",
+      "destination": "trading",
+      "account_value_change": "-0.00231 BTC",
+      "displayed_fee": "0 USDC"
+    },
+    {
+      "displayed_time": "03/10/2026 - 08:47:13",
+      "action": "send",
+      "source": "trading",
+      "destination": "trading",
+      "account_value_change": "0.0068773533 BTC",
+      "displayed_fee": "0 USDC"
+    },
+    {
+      "displayed_time": "04/10/2026 - 10:07:39",
+      "action": "withdraw",
+      "source": "trading",
+      "destination": "bitcoin",
+      "account_value_change": "-0.010085489999999999  BTC",
+      "displayed_fee": "0.00000487  BTC"
+    },
+    {
+      "displayed_time": "20/10/2026 - 15:23:28",
+      "action": "withdraw",
+      "source": "trading",
+      "destination": "bitcoin",
+      "account_value_change": "-0.02450356  BTC",
+      "displayed_fee": "0.00000376  BTC"
+    }
+  ],
+  "hl_csv_sha256": "accbf8e64b1c3ed7a5e4e6eb4019b4aba00a993ff2d1c4d76f4af7d574a35804",
+  "hl_csv_notes": [
+    "CSV display values are rounded and withdrawal times can be settlement times.",
+    "Use public full-precision HyperCore transfers plus actual BTC outputs for accounting.",
+    "For example June CSV withdrawal 0.00033714 is neither the full 0.0003396432 UBTC debit nor the actual 0.00033671 BTC output."
+  ]
+}

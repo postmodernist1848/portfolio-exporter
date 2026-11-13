@@ -1,0 +1,28 @@
+{
+  "bitcoin": [
+    {
+      "address": "bc1q45v5f5gq2rdrek3n9qkn8g85h6eq80r2m99jn7",
+      "role": "original cold",
+      "ownership_evidence": "User original prompt"
+    },
+    {
+      "address": "bc1qn9an2rzjt752j83x0nxjjgf59mmy34td806daw",
+      "role": "original hot",
+      "ownership_evidence": "User original prompt"
+    },
+    {
+      "address": "bc1qtg22qeel8htmdh5em3f0nu2rghygh8tfvzy2w3",
+      "role": "derived hot/change",
+      "ownership_evidence": "User confirmation of October 4/20 return path"
+    },
+    {
+      "address": "bc1qshzgardj4ewnq0nqzaqlmtmzevguxhpy9qcmyc",
+      "role": "additional cold",
+      "ownership_evidence": "User confirmation of October 20 return to cold wallet"
+    }
+  ],
+  "hyperliquid": [
+    "0x36c56c5f4b084244b1b0137e1cbb76af200fee5b",
+    "0x735b97415cd925daa56d2e2979eda5ddca056d55"
+  ]
+}

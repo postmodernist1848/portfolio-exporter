@@ -6,6 +6,13 @@ export type CryptoBreakdown = {
   kind: 'crypto';
   btc?: {
     priceRub: number;
+    // Optional for snapshots collected before BTC cost-basis tracking.
+    costBasis?: {
+      averagePriceUsdt: number;
+      costBasisRub: number;
+      unrealizedPnlRub: number;
+      unrealizedPnlPercent: number | null;
+    };
     wallets: Array<{ address: string; balanceBtc: number; totalRub: number }>;
   };
   evm?: {

@@ -39,8 +39,30 @@ describe('source breakdown', () => {
     expect(screen.getByText('Blockstream API', { exact: false })).toBeInTheDocument();
     expect(screen.getByText('Alchemy Portfolio API', { exact: false })).toBeInTheDocument();
     expect(screen.getByText('bc1q-public-address')).toBeInTheDocument();
+    expect(screen.queryByText('Нереализованный P&L BTC:', { exact: false })).not.toBeInTheDocument();
     expect(screen.getByText('0xpublic')).toBeInTheDocument();
     expect(screen.getByText('Arbitrum:', { exact: false })).toBeInTheDocument();
+  });
+
+  it.each([10_000, -10_000])('shows persisted Bitcoin P&L %s and its assumptions', (pnl) => {
+    render(<SourceBreakdownView breakdown={{
+      kind: 'crypto',
+      btc: {
+        priceRub: 5_000_000,
+        wallets: [],
+        costBasis: {
+          averagePriceUsdt: 75_278.13,
+          costBasisRub: 500_000,
+          unrealizedPnlRub: pnl,
+          unrealizedPnlPercent: pnl / 5_000
+        }
+      }
+    }} />);
+    expect(screen.getByText('Средняя цена с учётом хеджей и комиссий:', { exact: false })).toHaveTextContent('75 278,13 USDT/BTC');
+    const result = screen.getByText('Нереализованный P&L BTC:', { exact: false });
+    expect(result).toHaveTextContent(pnl < 0 ? '-10 000' : '10 000');
+    expect(result).toHaveTextContent(pnl < 0 ? '(-2%)' : '(2%)');
+    expect(screen.getByText('Расчёт по текущему курсу USD/RUB', { exact: false })).toBeInTheDocument();
   });
 
   it('shows every T-Bank account and an intentional exclusion', () => {

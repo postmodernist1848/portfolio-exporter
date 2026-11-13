@@ -1,0 +1,32 @@
+{
+  "acquisitions": [
+    {
+      "venue": "Across Polygon -> HyperEVM",
+      "acquired_at": "2026-11-13T19:56:11.000Z",
+      "net_btc": "0.01460838",
+      "quote_currency": "USDT",
+      "quote_spent": "1008.6",
+      "source_txid": "0xf6e12921f80390d47cd62b9a73f83cfe0cf333924af9b24357384be8f555d7b4",
+      "destination_txid": "0x371efc6a492db0e0302a8e66d91f9dc8863f8a5b9e6a85cf12eddad44a1f75a2",
+      "account": "0x36c56c5f4b084244b1b0137e1cbb76af200fee5b",
+      "hl_credit_hash": "0x6bbf0189711f3d5c6d380448b9c3dd0000fa196f0c125c2e0f87acdc30131747",
+      "source_chain_id": 137,
+      "destination_chain_id": 999,
+      "input_token": "0xc2132D05D31c914a87C6611C10748AEb04B58e8F",
+      "input_decimals": 6,
+      "input_base_units": "1008600000",
+      "destination_token": "0x9fdbda0a5e284c32744d2f17ee5c74b284993463",
+      "deposit_to_hypercore_txid": "0x4a2caecb446875a208ebb5e9f7f6c3653d3169d1fc495799628994951228135b",
+      "evidence": [
+        "https://app.across.to/api/deposits?depositor=0x36C56c5f4B084244b1b0137e1CBb76Af200FeE5b&limit=1",
+        "https://hyperevmscan.io/tx/0x371efc6a492db0e0302a8e66d91f9dc8863f8a5b9e6a85cf12eddad44a1f75a2",
+        "https://hyperevmscan.io/tx/0x4a2caecb446875a208ebb5e9f7f6c3653d3169d1fc495799628994951228135b"
+      ],
+      "notes": [
+        "Across original input is 1008.6 USDT; intermediary relayer transfers are not additional user spend.",
+        "Destination Transfer log credits 0.01460838 UBTC to user; next transfer credits HyperCore account.",
+        "Polygon and HyperEVM gas excluded."
+      ]
+    }
+  ]
+}

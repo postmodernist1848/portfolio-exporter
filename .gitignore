@@ -12,3 +12,9 @@ prisma/migrations
 data/postgres
 *.tsbuildinfo
 src/generated/prisma
+
+# Private inputs for the separate BTC cost-basis investigation.
+/*_OKX Funding History_*.zip
+/*_OKX Trading History_*.zip
+/deposits_and_withdrawals.csv
+__pycache__/

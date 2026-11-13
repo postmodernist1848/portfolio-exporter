@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { env } from '@/lib/config/env';
+import { calculateBitcoinCostBasis } from '@/lib/config/bitcoin-cost-basis';
 import { getJson } from '@/lib/services/http';
 import { fetchAlchemyEvmWallets } from './alchemy';
 import { fetchCryptoMarketPrices } from './currency';
@@ -64,7 +65,7 @@ export function safeCryptoFailure(error: unknown): {
 async function fetchBtcBreakdown(
   wallets: string[],
   pricesPromise: ReturnType<typeof fetchCryptoMarketPrices>
-): Promise<{ totalRub: number; breakdown: NonNullable<CryptoBreakdown['btc']> }> {
+): Promise<{ totalRub: number; staleRate: boolean; breakdown: NonNullable<CryptoBreakdown['btc']> }> {
   const [balances, prices] = await Promise.all([
     Promise.all(wallets.map((address) => getJson(
       `https://blockstream.info/api/address/${encodeURIComponent(address)}`,
@@ -84,7 +85,16 @@ async function fetchBtcBreakdown(
   });
   return {
     totalRub: rows.reduce((sum, row) => sum + row.totalRub, 0),
-    breakdown: { priceRub: prices.bitcoinRub, wallets: rows }
+    staleRate: prices.stale,
+    breakdown: {
+      priceRub: prices.bitcoinRub,
+      costBasis: calculateBitcoinCostBasis(
+        rows.reduce((sum, row) => sum + row.balanceBtc, 0),
+        prices.bitcoinRub,
+        prices.usdRubRate
+      ),
+      wallets: rows
+    }
   };
 }
 

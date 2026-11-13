@@ -1,0 +1,707 @@
+{
+  "fetched_at": "2026-11-13T20:47:32.803106+00:00",
+  "addresses": [
+    "bc1q45v5f5gq2rdrek3n9qkn8g85h6eq80r2m99jn7",
+    "bc1qn9an2rzjt752j83x0nxjjgf59mmy34td806daw",
+    "bc1qtg22qeel8htmdh5em3f0nu2rghygh8tfvzy2w3",
+    "bc1qshzgardj4ewnq0nqzaqlmtmzevguxhpy9qcmyc"
+  ],
+  "confirmed_balances_sats": {
+    "bc1q45v5f5gq2rdrek3n9qkn8g85h6eq80r2m99jn7": 12638179,
+    "bc1qn9an2rzjt752j83x0nxjjgf59mmy34td806daw": 0,
+    "bc1qtg22qeel8htmdh5em3f0nu2rghygh8tfvzy2w3": 0,
+    "bc1qshzgardj4ewnq0nqzaqlmtmzevguxhpy9qcmyc": 99584
+  },
+  "transactions": [
+    {
+      "txid": "f1501ab6d0ca97563dd57bbcbd271da48750d9bf28eea6d5a4a5fe1d86c53e4e",
+      "block_height": 949474,
+      "confirmed_at": "2026-05-15T07:05:59+00:00",
+      "inputs": [
+        {
+          "txid": "585de5a618290ce6a254134d306ab6c34ee644e952677cce24cfb6951aaf39b5",
+          "vout": 1,
+          "address": "bc1p8hrgp3dh90tmrc0muxd79x2f034gptpfr0r478cfes3lqc56zeqs33rp6y",
+          "sats": 422336
+        },
+        {
+          "txid": "585de5a618290ce6a254134d306ab6c34ee644e952677cce24cfb6951aaf39b5",
+          "vout": 4,
+          "address": "bc1p0575s8velzy9454q2ym3lkqvyclgjue6rpx2aypklpj5pr9fkpzqw0qnks",
+          "sats": 22765
+        },
+        {
+          "txid": "585de5a618290ce6a254134d306ab6c34ee644e952677cce24cfb6951aaf39b5",
+          "vout": 5,
+          "address": "bc1pjtrmpmz25zshrhvffdzh0x3f3wnzvsn3h7gmpxdjwy2e7xq9tltsftzm53",
+          "sats": 13704
+        },
+        {
+          "txid": "585de5a618290ce6a254134d306ab6c34ee644e952677cce24cfb6951aaf39b5",
+          "vout": 0,
+          "address": "bc1p4uamdn46js3jwn9evhu5hcy2y5x3n3ngqcc4wur6l4ffhukq0mmqmndd4d",
+          "sats": 340839
+        },
+        {
+          "txid": "585de5a618290ce6a254134d306ab6c34ee644e952677cce24cfb6951aaf39b5",
+          "vout": 8,
+          "address": "bc1pjanx430gsaqg4nvhqgw7z7p7g5p4sguhtzpzh3mwftkpfvx775xs39dzqe",
+          "sats": 13632
+        },
+        {
+          "txid": "585de5a618290ce6a254134d306ab6c34ee644e952677cce24cfb6951aaf39b5",
+          "vout": 11,
+          "address": "bc1pqxgkcta2sndunsmq94ht65uq82vjpznxq0hv5hkxel577x6nqa6q949z8h",
+          "sats": 3854930
+        },
+        {
+          "txid": "585de5a618290ce6a254134d306ab6c34ee644e952677cce24cfb6951aaf39b5",
+          "vout": 3,
+          "address": "bc1pd9nqcdvy7qx5435yr4la6redxu7p6j5ryxnl3y3xuckqwt6yw7ssjawj86",
+          "sats": 1862743
+        },
+        {
+          "txid": "585de5a618290ce6a254134d306ab6c34ee644e952677cce24cfb6951aaf39b5",
+          "vout": 13,
+          "address": "bc1pagwa6m3cx9q3cgpay7r5sl7kwkmzefe32hpzxkq8aay95t9wmwjqqq9mew",
+          "sats": 23093
+        },
+        {
+          "txid": "585de5a618290ce6a254134d306ab6c34ee644e952677cce24cfb6951aaf39b5",
+          "vout": 2,
+          "address": "bc1p6kmudv53nu9pm8ta7fgu4r28g35xalrh3sf7s89dzkqpdwjca7zq7shw9g",
+          "sats": 13780
+        },
+        {
+          "txid": "585de5a618290ce6a254134d306ab6c34ee644e952677cce24cfb6951aaf39b5",
+          "vout": 9,
+          "address": "bc1pqf2tzu5qxucu2n98xr5xe454l8g6pggxkt9veh0fprqj5498hh6qk8y5hz",
+          "sats": 47172
+        },
+        {
+          "txid": "585de5a618290ce6a254134d306ab6c34ee644e952677cce24cfb6951aaf39b5",
+          "vout": 7,
+          "address": "bc1pnp66jjj297tr646q3f4lj9yhpll80qxjfv3sq8cfwklkad0qqydslpfwtt",
+          "sats": 114384
+        },
+        {
+          "txid": "585de5a618290ce6a254134d306ab6c34ee644e952677cce24cfb6951aaf39b5",
+          "vout": 10,
+          "address": "bc1prle6m7uwvumnc7a5rv8302xlz8d5klrrqq752mcjqsv4qnvdqw7qmq5jvv",
+          "sats": 51301
+        }
+      ],
+      "outputs": [
+        {
+          "vout": 0,
+          "address": "bc1p0efaxzyw8f5v6jkzgsa07jmdwv638ekq5aaymtur8gk368x9yhasvv92dw",
+          "sats": 421647
+        },
+        {
+          "vout": 1,
+          "address": "bc1p2us4vqhfj6c9lnln2jvlvy6hzq9pr60euum8yz7kvvgaamtygwasa6jkny",
+          "sats": 22076
+        },
+        {
+          "vout": 2,
+          "address": "bc1qcvvwtn8qglwefsh80wm3zf8z4t3qppnkvg92sk",
+          "sats": 13015
+        },
+        {
+          "vout": 3,
+          "address": "bc1q8t65smqpq5zt83whgxlckvz9ve6pd0prz60m2g",
+          "sats": 340150
+        },
+        {
+          "vout": 4,
+          "address": "bc1qs9tttvl3uck8vsae4rjh2c9942ea7aqz7fpslh",
+          "sats": 12943
+        },
+        {
+          "vout": 5,
+          "address": "bc1ql6k7wkkcx6w4l2d6tn636ufyydggh3esrr5kry",
+          "sats": 3854234
+        },
+        {
+          "vout": 6,
+          "address": "bc1q45v5f5gq2rdrek3n9qkn8g85h6eq80r2m99jn7",
+          "sats": 1862054
+        },
+        {
+          "vout": 7,
+          "address": "bc1pzwwn6qmkqwymvg0w76eyvqz4uhrpj43axaf6sut49upf8lwup8hq9nv6l7",
+          "sats": 22404
+        },
+        {
+          "vout": 8,
+          "address": "bc1q3eaj9v6gvydra8t9fd95gm8ycf56u90u3vw2gz",
+          "sats": 13091
+        },
+        {
+          "vout": 9,
+          "address": "bc1pjasrkw4xssqrkf20l3pr8vm3dv22kk4tdqwq2dhtcwgep2zmgfxs9qtuzl",
+          "sats": 46483
+        },
+        {
+          "vout": 10,
+          "address": "bc1pm5e4k8wh5pm3at5he52nus7l26gw9m6s7s7smcpxq0ma0fvu4y3sxtadng",
+          "sats": 113695
+        },
+        {
+          "vout": 11,
+          "address": "bc1ppkayjgutxvsar6en6u4r3ckhuuek833qcwgplaewz4axlzw64lgscl9trx",
+          "sats": 50612
+        }
+      ],
+      "owned_input_sats": 0,
+      "owned_output_sats": 1862054,
+      "wallet_delta_sats": 1862054,
+      "network_fee_sats": 8275,
+      "mixed_inputs": false,
+      "kind": "external_receipt",
+      "evidence_url": "https://blockstream.info/tx/f1501ab6d0ca97563dd57bbcbd271da48750d9bf28eea6d5a4a5fe1d86c53e4e"
+    },
+    {
+      "txid": "5609a78fd2a59db927f923ab1ed9b41f13bf8642dbefbe4af32b62300b77012a",
+      "block_height": 952139,
+      "confirmed_at": "2026-06-02T18:38:03+00:00",
+      "inputs": [
+        {
+          "txid": "95a563b0f6efe6aca99f9d4a2d28c29ebbdaae7e980f3c69e85677ab4d32d387",
+          "vout": 0,
+          "address": "bc1phlj6pws7wwxfqh7nnm734hq4dca9kulsfpdkprmyqfha5tkuch6qpcj788",
+          "sats": 251176
+        },
+        {
+          "txid": "abe76a9bfe296f17d0063b84a4ff237b59d7bb8272090f829ca43a197bc999a9",
+          "vout": 0,
+          "address": "bc1ptktqprqmfmydqtrq86a9q93ykeh5rfylfv5u35txnspcxmefwrss05vt48",
+          "sats": 612000
+        },
+        {
+          "txid": "e6bdf2431620be1bf0be153534098def0ba40437eeed41caa7b9aea42acd5075",
+          "vout": 0,
+          "address": "bc1pjdlgwe27rr29l8hz6jm5xarut33gkuklmkhvkmk205typstdnkgsnz4y0a",
+          "sats": 1330000
+        },
+        {
+          "txid": "50af5b5e38c9ffe10feb7f2e90f8ef4511ea1647f75c512360782f9041922fa9",
+          "vout": 1,
+          "address": "bc1pt3ch53q25dg8rnj93pfw84thwlpwcllgh7q2n7rykerwxhahcrasc9vk6u",
+          "sats": 4000000
+        }
+      ],
+      "outputs": [
+        {
+          "vout": 0,
+          "address": "bc1q45v5f5gq2rdrek3n9qkn8g85h6eq80r2m99jn7",
+          "sats": 1475883
+        },
+        {
+          "vout": 1,
+          "address": "bc1p0xk3mfavg9ejx8c7u94x99kpyr439h5w5u6c7x5sxfype6ccvcaswgtz4k",
+          "sats": 4715569
+        }
+      ],
+      "owned_input_sats": 0,
+      "owned_output_sats": 1475883,
+      "wallet_delta_sats": 1475883,
+      "network_fee_sats": 1724,
+      "mixed_inputs": false,
+      "kind": "external_receipt",
+      "evidence_url": "https://blockstream.info/tx/5609a78fd2a59db927f923ab1ed9b41f13bf8642dbefbe4af32b62300b77012a"
+    },
+    {
+      "txid": "bba7df493b5168697a15a4caf2576e829dbbd28204ac4264faae650ecb494b69",
+      "block_height": 952506,
+      "confirmed_at": "2026-06-05T17:40:21+00:00",
+      "inputs": [
+        {
+          "txid": "736467eeef52e30bf22b598ae644d512dc3a35dc586cd6375c2600ca1804e26b",
+          "vout": 0,
+          "address": "bc1qgu78eemy6xr5x42ydreflwwu0ayf0efdvnxc7kr4jlplfx27snksmdf4jj",
+          "sats": 660920381
+        },
+        {
+          "txid": "21aa7f8e6355190fdc5df9c387b282282d172a0eb65ea7a7803a82e4381c0194",
+          "vout": 0,
+          "address": "bc1qgu78eemy6xr5x42ydreflwwu0ayf0efdvnxc7kr4jlplfx27snksmdf4jj",
+          "sats": 9999066
+        },
+        {
+          "txid": "20c4aac2f84374a162c95ed5ac40e6c8ede5e2b7efa84a60c2be1a7c8b4ef4bf",
+          "vout": 0,
+          "address": "bc1qgu78eemy6xr5x42ydreflwwu0ayf0efdvnxc7kr4jlplfx27snksmdf4jj",
+          "sats": 4997673
+        },
+        {
+          "txid": "7cb72c92a57c088f091e5804c34e3b1387bbe77c442542a138803689f2f94b55",
+          "vout": 0,
+          "address": "bc1qgu78eemy6xr5x42ydreflwwu0ayf0efdvnxc7kr4jlplfx27snksmdf4jj",
+          "sats": 3186445
+        }
+      ],
+      "outputs": [
+        {
+          "vout": 0,
+          "address": "bc1qgu78eemy6xr5x42ydreflwwu0ayf0efdvnxc7kr4jlplfx27snksmdf4jj",
+          "sats": 675510330
+        },
+        {
+          "vout": 1,
+          "address": null,
+          "sats": 0
+        },
+        {
+          "vout": 2,
+          "address": "bc1q45v5f5gq2rdrek3n9qkn8g85h6eq80r2m99jn7",
+          "sats": 3427525
+        },
+        {
+          "vout": 3,
+          "address": "bc1qlq7nnewqnt8uw3j7gv2apg2aqzmuwu7g8excfs",
+          "sats": 162918
+        }
+      ],
+      "owned_input_sats": 0,
+      "owned_output_sats": 3427525,
+      "wallet_delta_sats": 3427525,
+      "network_fee_sats": 2792,
+      "mixed_inputs": false,
+      "kind": "external_receipt",
+      "evidence_url": "https://blockstream.info/tx/bba7df493b5168697a15a4caf2576e829dbbd28204ac4264faae650ecb494b69"
+    },
+    {
+      "txid": "b32441c19b115b22531cca0a3c84a5d5b30d3d7d2cb742bb6aef26542b6069f4",
+      "block_height": 952769,
+      "confirmed_at": "2026-06-07T21:45:55+00:00",
+      "inputs": [
+        {
+          "txid": "32cc180ab6047902ea4d758367414e20463d940a7ca94b59696c915024357056",
+          "vout": 5,
+          "address": "bc1pdwu79dady576y3fupmm82m3g7p2p9f6hgyeqy0tdg7ztxg7xrayqlkl8j9",
+          "sats": 586478273
+        }
+      ],
+      "outputs": [
+        {
+          "vout": 0,
+          "address": "bc1q4at2swjyw4487fga37k6t5vp9arsj7y5xruvhq",
+          "sats": 49707
+        },
+        {
+          "vout": 1,
+          "address": "3KoTP1bCF6erx9ifJiLkZTFm6tNSWUhMpy",
+          "sats": 49495163
+        },
+        {
+          "vout": 2,
+          "address": "bc1qy7ht3lyyz96ddjpu2xdq2d49fjh7radydvlzj0",
+          "sats": 5983912
+        },
+        {
+          "vout": 3,
+          "address": "bc1q45v5f5gq2rdrek3n9qkn8g85h6eq80r2m99jn7",
+          "sats": 33671
+        },
+        {
+          "vout": 4,
+          "address": "bc1q0uezx5cr5fsuwrduwrnhh8e43ec99h9t04t9f4",
+          "sats": 5124719
+        },
+        {
+          "vout": 5,
+          "address": "bc1qe2suaqw2zkm0fjkcpjzrn6fwejwynpw2c86pp9",
+          "sats": 455331
+        },
+        {
+          "vout": 6,
+          "address": "bc1pdwu79dady576y3fupmm82m3g7p2p9f6hgyeqy0tdg7ztxg7xrayqlkl8j9",
+          "sats": 525334012
+        }
+      ],
+      "owned_input_sats": 0,
+      "owned_output_sats": 33671,
+      "wallet_delta_sats": 33671,
+      "network_fee_sats": 1758,
+      "mixed_inputs": false,
+      "kind": "external_receipt",
+      "evidence_url": "https://blockstream.info/tx/b32441c19b115b22531cca0a3c84a5d5b30d3d7d2cb742bb6aef26542b6069f4"
+    },
+    {
+      "txid": "13ba341386b0d9e939a68178e3669cbaae67baf09baea09c9e77f9eeea72b6ec",
+      "block_height": 961580,
+      "confirmed_at": "2026-08-08T12:20:38+00:00",
+      "inputs": [
+        {
+          "txid": "5609a78fd2a59db927f923ab1ed9b41f13bf8642dbefbe4af32b62300b77012a",
+          "vout": 0,
+          "address": "bc1q45v5f5gq2rdrek3n9qkn8g85h6eq80r2m99jn7",
+          "sats": 1475883
+        }
+      ],
+      "outputs": [
+        {
+          "vout": 0,
+          "address": "bc1qn9an2rzjt752j83x0nxjjgf59mmy34td806daw",
+          "sats": 100000
+        },
+        {
+          "vout": 1,
+          "address": "bc1q45v5f5gq2rdrek3n9qkn8g85h6eq80r2m99jn7",
+          "sats": 1375601
+        }
+      ],
+      "owned_input_sats": 1475883,
+      "owned_output_sats": 1475601,
+      "wallet_delta_sats": -282,
+      "network_fee_sats": 282,
+      "mixed_inputs": false,
+      "kind": "wallet_spend",
+      "evidence_url": "https://blockstream.info/tx/13ba341386b0d9e939a68178e3669cbaae67baf09baea09c9e77f9eeea72b6ec"
+    },
+    {
+      "txid": "cdd98db2f4a27c35f81c801e4d02f805b292204a8f84677a6cce82b976bfc6e4",
+      "block_height": 961581,
+      "confirmed_at": "2026-08-08T12:24:04+00:00",
+      "inputs": [
+        {
+          "txid": "bba7df493b5168697a15a4caf2576e829dbbd28204ac4264faae650ecb494b69",
+          "vout": 2,
+          "address": "bc1q45v5f5gq2rdrek3n9qkn8g85h6eq80r2m99jn7",
+          "sats": 3427525
+        },
+        {
+          "txid": "f1501ab6d0ca97563dd57bbcbd271da48750d9bf28eea6d5a4a5fe1d86c53e4e",
+          "vout": 6,
+          "address": "bc1q45v5f5gq2rdrek3n9qkn8g85h6eq80r2m99jn7",
+          "sats": 1862054
+        },
+        {
+          "txid": "13ba341386b0d9e939a68178e3669cbaae67baf09baea09c9e77f9eeea72b6ec",
+          "vout": 1,
+          "address": "bc1q45v5f5gq2rdrek3n9qkn8g85h6eq80r2m99jn7",
+          "sats": 1375601
+        },
+        {
+          "txid": "b32441c19b115b22531cca0a3c84a5d5b30d3d7d2cb742bb6aef26542b6069f4",
+          "vout": 3,
+          "address": "bc1q45v5f5gq2rdrek3n9qkn8g85h6eq80r2m99jn7",
+          "sats": 33671
+        }
+      ],
+      "outputs": [
+        {
+          "vout": 0,
+          "address": "bc1qn9an2rzjt752j83x0nxjjgf59mmy34td806daw",
+          "sats": 6698223
+        }
+      ],
+      "owned_input_sats": 6698851,
+      "owned_output_sats": 6698223,
+      "wallet_delta_sats": -628,
+      "network_fee_sats": 628,
+      "mixed_inputs": false,
+      "kind": "wallet_spend",
+      "evidence_url": "https://blockstream.info/tx/cdd98db2f4a27c35f81c801e4d02f805b292204a8f84677a6cce82b976bfc6e4"
+    },
+    {
+      "txid": "bb21dbefee6b3f84df3076eb50ccc6db6489b6bd94d078e9708e8d67a4f6f33d",
+      "block_height": 963412,
+      "confirmed_at": "2026-08-21T09:08:11+00:00",
+      "inputs": [
+        {
+          "txid": "cdd98db2f4a27c35f81c801e4d02f805b292204a8f84677a6cce82b976bfc6e4",
+          "vout": 0,
+          "address": "bc1qn9an2rzjt752j83x0nxjjgf59mmy34td806daw",
+          "sats": 6698223
+        }
+      ],
+      "outputs": [
+        {
+          "vout": 0,
+          "address": "bc1p9w5ng2xw2qy4va0pjleavahfqnxr24mv0upu3fpv6h8702020pwq2jq2vw",
+          "sats": 100000
+        },
+        {
+          "vout": 1,
+          "address": "bc1qn9an2rzjt752j83x0nxjjgf59mmy34td806daw",
+          "sats": 6598070
+        }
+      ],
+      "owned_input_sats": 6698223,
+      "owned_output_sats": 6598070,
+      "wallet_delta_sats": -100153,
+      "network_fee_sats": 153,
+      "mixed_inputs": false,
+      "kind": "wallet_spend",
+      "evidence_url": "https://blockstream.info/tx/bb21dbefee6b3f84df3076eb50ccc6db6489b6bd94d078e9708e8d67a4f6f33d"
+    },
+    {
+      "txid": "01fdd700613b72ee86930e39bf605977f0eed7fb02871cb100898db6daa7911e",
+      "block_height": 963412,
+      "confirmed_at": "2026-08-21T09:08:11+00:00",
+      "inputs": [
+        {
+          "txid": "bb21dbefee6b3f84df3076eb50ccc6db6489b6bd94d078e9708e8d67a4f6f33d",
+          "vout": 1,
+          "address": "bc1qn9an2rzjt752j83x0nxjjgf59mmy34td806daw",
+          "sats": 6598070
+        }
+      ],
+      "outputs": [
+        {
+          "vout": 0,
+          "address": "bc1qn9an2rzjt752j83x0nxjjgf59mmy34td806daw",
+          "sats": 6597434
+        }
+      ],
+      "owned_input_sats": 6598070,
+      "owned_output_sats": 6597434,
+      "wallet_delta_sats": -636,
+      "network_fee_sats": 636,
+      "mixed_inputs": false,
+      "kind": "wallet_spend",
+      "evidence_url": "https://blockstream.info/tx/01fdd700613b72ee86930e39bf605977f0eed7fb02871cb100898db6daa7911e"
+    },
+    {
+      "txid": "eaf4b33dcccd210dd37c1ed955965c8eaf1c6eb4f818f7f92ba80e8b00f9bb95",
+      "block_height": 969806,
+      "confirmed_at": "2026-10-04T06:06:44+00:00",
+      "inputs": [
+        {
+          "txid": "c2cc35156d2e638cf8e951059ce75b30d6a98ab01901722627be4d3b22e1cb19",
+          "vout": 0,
+          "address": "bc1pdwu79dady576y3fupmm82m3g7p2p9f6hgyeqy0tdg7ztxg7xrayqlkl8j9",
+          "sats": 1621823044
+        }
+      ],
+      "outputs": [
+        {
+          "vout": 0,
+          "address": "bc1q45v5f5gq2rdrek3n9qkn8g85h6eq80r2m99jn7",
+          "sats": 1008061
+        },
+        {
+          "vout": 1,
+          "address": "bc1pdwu79dady576y3fupmm82m3g7p2p9f6hgyeqy0tdg7ztxg7xrayqlkl8j9",
+          "sats": 1620814008
+        }
+      ],
+      "owned_input_sats": 0,
+      "owned_output_sats": 1008061,
+      "wallet_delta_sats": 1008061,
+      "network_fee_sats": 975,
+      "mixed_inputs": false,
+      "kind": "external_receipt",
+      "evidence_url": "https://blockstream.info/tx/eaf4b33dcccd210dd37c1ed955965c8eaf1c6eb4f818f7f92ba80e8b00f9bb95"
+    },
+    {
+      "txid": "4c3c705de38504fcdec05c0f2e5ea18836ddf30356461668a9b3bd553abefa51",
+      "block_height": 969807,
+      "confirmed_at": "2026-10-04T06:38:35+00:00",
+      "inputs": [
+        {
+          "txid": "eaf4b33dcccd210dd37c1ed955965c8eaf1c6eb4f818f7f92ba80e8b00f9bb95",
+          "vout": 0,
+          "address": "bc1q45v5f5gq2rdrek3n9qkn8g85h6eq80r2m99jn7",
+          "sats": 1008061
+        }
+      ],
+      "outputs": [
+        {
+          "vout": 0,
+          "address": "bc1qn9an2rzjt752j83x0nxjjgf59mmy34td806daw",
+          "sats": 100000
+        },
+        {
+          "vout": 1,
+          "address": "bc1q45v5f5gq2rdrek3n9qkn8g85h6eq80r2m99jn7",
+          "sats": 907779
+        }
+      ],
+      "owned_input_sats": 1008061,
+      "owned_output_sats": 1007779,
+      "wallet_delta_sats": -282,
+      "network_fee_sats": 282,
+      "mixed_inputs": false,
+      "kind": "wallet_spend",
+      "evidence_url": "https://blockstream.info/tx/4c3c705de38504fcdec05c0f2e5ea18836ddf30356461668a9b3bd553abefa51"
+    },
+    {
+      "txid": "7ffc8dec9ba4fb2f271a970abd66079b141c6587e51534d320f1dc3d959738e3",
+      "block_height": 969809,
+      "confirmed_at": "2026-10-04T07:23:24+00:00",
+      "inputs": [
+        {
+          "txid": "4c3c705de38504fcdec05c0f2e5ea18836ddf30356461668a9b3bd553abefa51",
+          "vout": 0,
+          "address": "bc1qn9an2rzjt752j83x0nxjjgf59mmy34td806daw",
+          "sats": 100000
+        },
+        {
+          "txid": "01fdd700613b72ee86930e39bf605977f0eed7fb02871cb100898db6daa7911e",
+          "vout": 0,
+          "address": "bc1qn9an2rzjt752j83x0nxjjgf59mmy34td806daw",
+          "sats": 6597434
+        },
+        {
+          "txid": "13ba341386b0d9e939a68178e3669cbaae67baf09baea09c9e77f9eeea72b6ec",
+          "vout": 0,
+          "address": "bc1qn9an2rzjt752j83x0nxjjgf59mmy34td806daw",
+          "sats": 100000
+        }
+      ],
+      "outputs": [
+        {
+          "vout": 0,
+          "address": "bc1qtg22qeel8htmdh5em3f0nu2rghygh8tfvzy2w3",
+          "sats": 99694
+        },
+        {
+          "vout": 1,
+          "address": "bc1q45v5f5gq2rdrek3n9qkn8g85h6eq80r2m99jn7",
+          "sats": 6697389
+        }
+      ],
+      "owned_input_sats": 6797434,
+      "owned_output_sats": 6797083,
+      "wallet_delta_sats": -351,
+      "network_fee_sats": 351,
+      "mixed_inputs": false,
+      "kind": "wallet_spend",
+      "evidence_url": "https://blockstream.info/tx/7ffc8dec9ba4fb2f271a970abd66079b141c6587e51534d320f1dc3d959738e3"
+    },
+    {
+      "txid": "e157221b83aa7c516c9f5681d174c8462cb8b7d6600a3d5b1514bcc30c3e979b",
+      "block_height": 972320,
+      "confirmed_at": "2026-10-20T12:15:07+00:00",
+      "inputs": [
+        {
+          "txid": "1ff112396ba5593b608f9c3b7b04e139b9423f9506eb86b90d130a72161943c3",
+          "vout": 3,
+          "address": "bc1pdwu79dady576y3fupmm82m3g7p2p9f6hgyeqy0tdg7ztxg7xrayqlkl8j9",
+          "sats": 505532457
+        }
+      ],
+      "outputs": [
+        {
+          "vout": 0,
+          "address": "bc1q45v5f5gq2rdrek3n9qkn8g85h6eq80r2m99jn7",
+          "sats": 2450167
+        },
+        {
+          "vout": 1,
+          "address": "bc1qnvwswc7zncuvrfnn5ene0ywqpfxft2auuxzsgg",
+          "sats": 493127
+        },
+        {
+          "vout": 2,
+          "address": "bc1pdwu79dady576y3fupmm82m3g7p2p9f6hgyeqy0tdg7ztxg7xrayqlkl8j9",
+          "sats": 502588033
+        }
+      ],
+      "owned_input_sats": 0,
+      "owned_output_sats": 2450167,
+      "wallet_delta_sats": 2450167,
+      "network_fee_sats": 1130,
+      "mixed_inputs": false,
+      "kind": "external_receipt",
+      "evidence_url": "https://blockstream.info/tx/e157221b83aa7c516c9f5681d174c8462cb8b7d6600a3d5b1514bcc30c3e979b"
+    },
+    {
+      "txid": "7021d6bf2470c4edc7fbaf1f6359289b77b8a347d06a84a1172d77f2f97ef0be",
+      "block_height": 972347,
+      "confirmed_at": "2026-10-20T15:14:17+00:00",
+      "inputs": [
+        {
+          "txid": "7ffc8dec9ba4fb2f271a970abd66079b141c6587e51534d320f1dc3d959738e3",
+          "vout": 0,
+          "address": "bc1qtg22qeel8htmdh5em3f0nu2rghygh8tfvzy2w3",
+          "sats": 99694
+        }
+      ],
+      "outputs": [
+        {
+          "vout": 0,
+          "address": "bc1qshzgardj4ewnq0nqzaqlmtmzevguxhpy9qcmyc",
+          "sats": 99584
+        }
+      ],
+      "owned_input_sats": 99694,
+      "owned_output_sats": 99584,
+      "wallet_delta_sats": -110,
+      "network_fee_sats": 110,
+      "mixed_inputs": false,
+      "kind": "wallet_spend",
+      "evidence_url": "https://blockstream.info/tx/7021d6bf2470c4edc7fbaf1f6359289b77b8a347d06a84a1172d77f2f97ef0be"
+    },
+    {
+      "txid": "538993415c7d47a32d56957e6cb273a5ef5fad45687bc9cfc25543597a7b3eff",
+      "block_height": 975710,
+      "confirmed_at": "2026-11-13T20:46:21+00:00",
+      "inputs": [
+        {
+          "txid": "ecb0a838b6cbcc9d17e5b0ef5c0ef4e181a2be64562358dc2dda874f85c7cff8",
+          "vout": 0,
+          "address": "bc1pdwu79dady576y3fupmm82m3g7p2p9f6hgyeqy0tdg7ztxg7xrayqlkl8j9",
+          "sats": 1428483417
+        }
+      ],
+      "outputs": [
+        {
+          "vout": 0,
+          "address": "bc1qzn95cxvrz76g2ld68hykw8hade23qr00k6fn6l",
+          "sats": 372450194
+        },
+        {
+          "vout": 1,
+          "address": "bc1q45v5f5gq2rdrek3n9qkn8g85h6eq80r2m99jn7",
+          "sats": 2582844
+        },
+        {
+          "vout": 2,
+          "address": "bc1qp5vu68umf5zxzx2huq4xqj4y8zjs6lcwktfcy0",
+          "sats": 1199536
+        },
+        {
+          "vout": 3,
+          "address": "bc1qzguzem5w7mfm0ufck6nrsquaw8n3eafygkk9zh",
+          "sats": 21901122
+        },
+        {
+          "vout": 4,
+          "address": "bc1qawv79hjvaajqs8ahj6sy7jr69hnudljfzzylkh",
+          "sats": 6999536
+        },
+        {
+          "vout": 5,
+          "address": "bc1qnqxd0uhskhhswqdfrfz7wf50v8nn8ktnuy9scd",
+          "sats": 5171058
+        },
+        {
+          "vout": 6,
+          "address": "bc1qk7feuu3z6ffx0ep27k79j6vmj5yvk4kkumakx2",
+          "sats": 3756010
+        },
+        {
+          "vout": 7,
+          "address": "bc1qknr78ex2mjwjlztnxn002uw7yfgzkqn757hftn",
+          "sats": 14491384
+        },
+        {
+          "vout": 8,
+          "address": "bc1pdwu79dady576y3fupmm82m3g7p2p9f6hgyeqy0tdg7ztxg7xrayqlkl8j9",
+          "sats": 999928021
+        }
+      ],
+      "owned_input_sats": 0,
+      "owned_output_sats": 2582844,
+      "wallet_delta_sats": 2582844,
+      "network_fee_sats": 3712,
+      "mixed_inputs": false,
+      "kind": "external_receipt",
+      "evidence_url": "https://blockstream.info/tx/538993415c7d47a32d56957e6cb273a5ef5fad45687bc9cfc25543597a7b3eff"
+    }
+  ]
+}

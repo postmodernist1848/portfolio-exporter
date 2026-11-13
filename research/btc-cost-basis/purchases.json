@@ -1,0 +1,183 @@
+{
+  "schema_version": 2,
+  "as_of": "2026-11-13",
+  "quote_currency": "USDT",
+  "scope": "Four user-confirmed BTC addresses plus two HL accounts; BTC receipts from HL are internal transfers",
+  "entire_wallet_average_usdt_per_btc": null,
+  "receipts": [
+    {
+      "id": "btc-f1501ab6d0ca",
+      "btc_txid": "f1501ab6d0ca97563dd57bbcbd271da48750d9bf28eea6d5a4a5fe1d86c53e4e",
+      "received_at": "2026-05-15T07:05:59+00:00",
+      "received_sats": 1862054,
+      "source": "Garden via LI.FI",
+      "cost_usdt": "1500",
+      "cost_status": "protocol_record_matched_to_btc",
+      "source_evidence": [
+        "https://api.garden.finance/v2/orders?address=bc1q45v5f5gq2rdrek3n9qkn8g85h6eq80r2m99jn7&per_page=100",
+        "https://etherscan.io/tx/0x968471c6e3594167470221b282c1201a6d32bf1ac194a872c765eb59e474e3b5",
+        "https://blockstream.info/tx/f1501ab6d0ca97563dd57bbcbd271da48750d9bf28eea6d5a4a5fe1d86c53e4e"
+      ],
+      "notes": [
+        "Ethereum USDT, 6 decimals; 1500000000 base units.",
+        "Garden gross BTC 1862743 sats; actual wallet receipt 1862054 sats: 689 sats redemption fee share.",
+        "Source gas and approval gas not yet valued; 1500 USDT is swap spend only.",
+        "Garden indexed initiate/redeem timestamps say May 19 but Bitcoin confirms May 15; use transaction hashes, not index timestamps."
+      ],
+      "effective_swap_only_usdt_per_btc": "80556.20298874253915299985930",
+      "receipt_kind": "purchase_delivery"
+    },
+    {
+      "id": "btc-5609a78fd2a5",
+      "btc_txid": "5609a78fd2a59db927f923ab1ed9b41f13bf8642dbefbe4af32b62300b77012a",
+      "received_at": "2026-06-02T18:38:03+00:00",
+      "received_sats": 1475883,
+      "source": "Symbiosis routed swap",
+      "cost_usdt": "1000",
+      "cost_status": "source_usdt_transfer_and_destination_btc_matched",
+      "source_evidence": [
+        "https://blockstream.info/tx/5609a78fd2a59db927f923ab1ed9b41f13bf8642dbefbe4af32b62300b77012a",
+        "https://etherscan.io/tx/0x5f8e53f423bf21e2a6bf6e5913cc4c7bfe78e9592e408aa3dcbe2ab90a4b41a2",
+        "https://api.symbiosis.finance/explorer/v1/transactions?search=0x2BE615ccFe3ba651602DBd109726b71A7bD92996"
+      ],
+      "notes": [
+        "Actual original Ethereum USDT spend, not intermediate token valuation.",
+        "Source gas and approval gas not yet valued.",
+        "Intermediate 997.060123 USDC is not the original spend; actual debit is 1000 USDT."
+      ],
+      "source_txid": "0x5f8e53f423bf21e2a6bf6e5913cc4c7bfe78e9592e408aa3dcbe2ab90a4b41a2",
+      "source_wallet": "0x2BE615ccFe3ba651602DBd109726b71A7bD92996",
+      "effective_swap_only_usdt_per_btc": "67756.04841305171209370932520",
+      "receipt_kind": "purchase_delivery"
+    },
+    {
+      "id": "btc-bba7df493b51",
+      "btc_txid": "bba7df493b5168697a15a4caf2576e829dbbd28204ac4264faae650ecb494b69",
+      "received_at": "2026-06-05T17:40:21+00:00",
+      "received_sats": 3427525,
+      "source": "Symbiosis routed swap",
+      "cost_usdt": "2099.7",
+      "cost_status": "source_usdt_transfer_and_destination_btc_matched",
+      "source_evidence": [
+        "https://blockstream.info/tx/bba7df493b5168697a15a4caf2576e829dbbd28204ac4264faae650ecb494b69",
+        "https://etherscan.io/tx/0xf2ac7fc5084f146549dd240be5d64c9da85988872db68a3d6699a8356123b403",
+        "https://api.symbiosis.finance/explorer/v1/transactions?search=0x36c56c5f4b084244b1b0137e1cbb76af200fee5b"
+      ],
+      "notes": [
+        "Actual original Ethereum USDT spend, not intermediate token valuation.",
+        "Source gas and approval gas not yet valued.",
+        "Route: 2099.7 USDT -> USDC -> WBTC -> syBTC -> native BTC. syBTC is an intermediate asset, not a separate prior holding. An earlier 2100 USDT bridge attempt and 2099.7 USDT return are visible and need fee-policy review; do not count both as BTC purchases."
+      ],
+      "source_txid": "0xf2ac7fc5084f146549dd240be5d64c9da85988872db68a3d6699a8356123b403",
+      "source_wallet": "0x36c56c5f4b084244b1b0137e1cbb76af200fee5b",
+      "effective_swap_only_usdt_per_btc": "61259.94704633810110794231990",
+      "receipt_kind": "purchase_delivery"
+    },
+    {
+      "id": "btc-b32441c19b11",
+      "btc_txid": "b32441c19b115b22531cca0a3c84a5d5b30d3d7d2cb742bb6aef26542b6069f4",
+      "received_at": "2026-06-07T21:45:55+00:00",
+      "received_sats": 33671,
+      "source": "Hyperliquid UBTC via Hyperunit",
+      "cost_usdt": null,
+      "cost_status": "basis_carried_from_tracked_btc_and_ubtc_acquisitions",
+      "source_evidence": [
+        "https://blockstream.info/tx/b32441c19b115b22531cca0a3c84a5d5b30d3d7d2cb742bb6aef26542b6069f4",
+        "hyperliquid-evidence.json"
+      ],
+      "notes": [
+        "Not a new purchase: acquisition fills, earlier Bitcoin deposit and transfer fees are reconciled in reconciliation.json.",
+        "Native fill quote is USDC. USDT estimate uses explicitly approximate parity."
+      ],
+      "receipt_kind": "internal_hyperliquid_withdrawal"
+    },
+    {
+      "id": "btc-eaf4b33dcccd",
+      "btc_txid": "eaf4b33dcccd210dd37c1ed955965c8eaf1c6eb4f818f7f92ba80e8b00f9bb95",
+      "received_at": "2026-10-04T06:06:44+00:00",
+      "received_sats": 1008061,
+      "source": "Hyperliquid UBTC via Hyperunit",
+      "cost_usdt": null,
+      "cost_status": "basis_carried_from_tracked_btc_and_ubtc_acquisitions",
+      "source_evidence": [
+        "https://blockstream.info/tx/eaf4b33dcccd210dd37c1ed955965c8eaf1c6eb4f818f7f92ba80e8b00f9bb95",
+        "hyperliquid-evidence.json"
+      ],
+      "notes": [
+        "Not a new purchase: acquisition fills, earlier Bitcoin deposit and transfer fees are reconciled in reconciliation.json.",
+        "Native fill quote is USDC. USDT estimate uses explicitly approximate parity."
+      ],
+      "receipt_kind": "internal_hyperliquid_withdrawal"
+    },
+    {
+      "id": "btc-e157221b83aa",
+      "btc_txid": "e157221b83aa7c516c9f5681d174c8462cb8b7d6600a3d5b1514bcc30c3e979b",
+      "received_at": "2026-10-20T12:15:07+00:00",
+      "received_sats": 2450167,
+      "source": "Hyperliquid UBTC via Hyperunit",
+      "cost_usdt": null,
+      "cost_status": "basis_carried_from_tracked_btc_and_ubtc_acquisitions",
+      "source_evidence": [
+        "https://blockstream.info/tx/e157221b83aa7c516c9f5681d174c8462cb8b7d6600a3d5b1514bcc30c3e979b",
+        "hyperliquid-evidence.json"
+      ],
+      "notes": [
+        "Not a new purchase: acquisition fills, earlier Bitcoin deposit and transfer fees are reconciled in reconciliation.json.",
+        "Native fill quote is USDC. USDT estimate uses explicitly approximate parity."
+      ],
+      "receipt_kind": "internal_hyperliquid_withdrawal"
+    },
+    {
+      "id": "btc-538993415c7d",
+      "btc_txid": "538993415c7d47a32d56957e6cb273a5ef5fad45687bc9cfc25543597a7b3eff",
+      "received_at": "2026-11-13T20:46:21+00:00",
+      "received_sats": 2582844,
+      "source": "Hyperliquid UBTC via Hyperunit",
+      "cost_usdt": null,
+      "cost_status": "basis_carried_from_tracked_btc_and_ubtc_acquisitions",
+      "source_evidence": [
+        "https://blockstream.info/tx/538993415c7d47a32d56957e6cb273a5ef5fad45687bc9cfc25543597a7b3eff",
+        "hyperliquid-evidence.json",
+        "external-acquisitions.json"
+      ],
+      "notes": [
+        "Four new HL spot buys plus Across Polygon USDT -> HyperEVM UBTC acquisition.",
+        "Full HyperCore withdrawal debit 0.0258330811 UBTC; native BTC delivery 0.02582844."
+      ],
+      "receipt_kind": "internal_hyperliquid_withdrawal"
+    }
+  ],
+  "estimated_average_reference": "reconciliation.json",
+  "classified_transfers": [
+    {
+      "btc_txid": "bb21dbefee6b3f84df3076eb50ccc6db6489b6bd94d078e9708e8d67a4f6f33d",
+      "confirmed_at": "2026-08-21T09:08:11+00:00",
+      "outputs": [
+        {
+          "vout": 0,
+          "address": "bc1p9w5ng2xw2qy4va0pjleavahfqnxr24mv0upu3fpv6h8702020pwq2jq2vw",
+          "sats": 100000
+        }
+      ],
+      "classification": "internal_deposit_to_first_hyperliquid_account",
+      "proceeds_usdt": null,
+      "credited_ubtc": "0.0009755714",
+      "bridge_loss_btc": "0.0000244286"
+    },
+    {
+      "btc_txid": "7ffc8dec9ba4fb2f271a970abd66079b141c6587e51534d320f1dc3d959738e3",
+      "confirmed_at": "2026-10-04T07:23:24+00:00",
+      "outputs": [
+        {
+          "vout": 0,
+          "address": "bc1qtg22qeel8htmdh5em3f0nu2rghygh8tfvzy2w3",
+          "sats": 99694
+        }
+      ],
+      "classification": "internal_change_and_return_to_cold_wallet_user_confirmed",
+      "proceeds_usdt": null,
+      "basis_treatment": "Preserve basis; 351-sat parent and 110-sat child network fees are separate",
+      "followup_evidence": "change-branch.json"
+    }
+  ]
+}

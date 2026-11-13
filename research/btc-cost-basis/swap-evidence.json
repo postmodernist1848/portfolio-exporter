@@ -1,0 +1,119 @@
+{
+  "usdt_flows": [
+    {
+      "txid": "0x5f8e53f423bf21e2a6bf6e5913cc4c7bfe78e9592e408aa3dcbe2ab90a4b41a2",
+      "token": "USDT",
+      "token_contract": "0xdAC17F958D2ee523a2206206994597C13D831ec7",
+      "decimals": 6,
+      "base_units": "1000000000",
+      "from_address": "0x2BE615ccFe3ba651602DBd109726b71A7bD92996",
+      "to_address": "0xfF9B21c3bfA4BCE9b20b55fEd56d102ceD48b0F6"
+    },
+    {
+      "txid": "0x5350d00482e5e3374f6781e1103d8650adb2b51f6e758461aa32f8b591ff215f",
+      "token": "USDT",
+      "token_contract": "0xdac17f958d2ee523a2206206994597c13d831ec7",
+      "decimals": 6,
+      "base_units": "2100000000",
+      "from_address": "0x36c56c5f4b084244b1b0137e1cbb76af200fee5b",
+      "to_address": "0x89c6340b1a1f4b25d36cd8b063d49045caf3f818",
+      "block_height": 25252257,
+      "gas_used": "204548",
+      "gas_price_wei": "7439591142"
+    },
+    {
+      "txid": "0xad4e068efa67e2a7df31c54c3844cf37f1c4ad0a2a3dac1131254403696358d6",
+      "token": "USDT",
+      "token_contract": "0xdac17f958d2ee523a2206206994597c13d831ec7",
+      "decimals": 6,
+      "base_units": "2099700000",
+      "from_address": "0x2cff890f0378a11913b6129b2e97417a2c302680",
+      "to_address": "0x36c56c5f4b084244b1b0137e1cbb76af200fee5b",
+      "block_height": 25252559,
+      "gas_used": "63209",
+      "gas_price_wei": "1690780389"
+    },
+    {
+      "txid": "0xf2ac7fc5084f146549dd240be5d64c9da85988872db68a3d6699a8356123b403",
+      "token": "USDT",
+      "token_contract": "0xdac17f958d2ee523a2206206994597c13d831ec7",
+      "decimals": 6,
+      "base_units": "2099700000",
+      "from_address": "0x36c56c5f4b084244b1b0137e1cbb76af200fee5b",
+      "to_address": "0x92114294e42a96c9ef3163da18ee7efdba6cc661",
+      "block_height": 25252669,
+      "gas_used": "692432",
+      "gas_price_wei": "2382308989"
+    },
+    {
+      "txid": "0x968471c6e3594167470221b282c1201a6d32bf1ac194a872c765eb59e474e3b5",
+      "token": "USDT",
+      "token_contract": "0xdac17f958d2ee523a2206206994597c13d831ec7",
+      "decimals": 6,
+      "base_units": "1500000000",
+      "from_address": "0x2be615ccfe3ba651602dbd109726b71a7bd92996",
+      "to_address": "0x89c6340b1a1f4b25d36cd8b063d49045caf3f818",
+      "block_height": 25098549,
+      "gas_used": "266596",
+      "gas_price_wei": "129412719"
+    }
+  ],
+  "symbiosis_routes": [
+    {
+      "id": 5047411,
+      "from_chain_id": 1,
+      "from_tx_hash": "0x5f8e53f423bf21e2a6bf6e5913cc4c7bfe78e9592e408aa3dcbe2ab90a4b41a2",
+      "to_tx_hash": "5609a78fd2a59db927f923ab1ed9b41f13bf8642dbefbe4af32b62300b77012a",
+      "from_address": "0x2BE615ccFe3ba651602DBd109726b71A7bD92996",
+      "to_address": "bc1q45v5f5gq2rdrek3n9qkn8g85h6eq80r2m99jn7",
+      "amounts": [
+        997060123,
+        1475883
+      ],
+      "tokens": [
+        {
+          "symbol": "USDC",
+          "name": "USD Coin",
+          "address": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+          "decimals": 6
+        }
+      ],
+      "created_at": "2026-06-02T18:25:59Z",
+      "to_btc_output_id": null,
+      "to_btc_value": null
+    },
+    {
+      "id": 5055876,
+      "from_chain_id": 1,
+      "from_tx_hash": "0xf2ac7fc5084f146549dd240be5d64c9da85988872db68a3d6699a8356123b403",
+      "to_tx_hash": "bba7df493b5168697a15a4caf2576e829dbbd28204ac4264faae650ecb494b69",
+      "from_address": "0x36C56c5f4B084244b1b0137e1CBb76Af200FeE5b",
+      "to_address": "bc1q45v5f5gq2rdrek3n9qkn8g85h6eq80r2m99jn7",
+      "amounts": [
+        3427525,
+        3427525
+      ],
+      "tokens": [
+        {
+          "symbol": "syBTC",
+          "name": "syBTC",
+          "address": "0x01a8b61E7b03891a736B5DF865E0EF9C511850ad",
+          "decimals": 8
+        }
+      ],
+      "created_at": "2026-06-05T17:27:47Z",
+      "to_btc_output_id": "2",
+      "to_btc_value": "3427525"
+    }
+  ],
+  "garden_order": {
+    "order_id": "ae40afd61e5bbe3f304d08c9555830eb3665f5eaa12cda820056ab72fe775c2a",
+    "source_chain": "ethereum",
+    "source_token": "USDT",
+    "source_decimals": 6,
+    "source_base_units": "1500000000",
+    "source_txid": "0x968471c6e3594167470221b282c1201a6d32bf1ac194a872c765eb59e474e3b5",
+    "gross_destination_sats": 1862743,
+    "net_destination_sats": 1862054
+  }
+}
