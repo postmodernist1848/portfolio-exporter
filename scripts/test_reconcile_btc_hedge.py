@@ -47,5 +47,5 @@ class HedgeAccountingTests(unittest.TestCase):
         result = MODULE["calculate"]()
         for s in result["scenarios"].values():
             for p in s["policies"].values():
-                self.assertEqual(D(p["remaining_btc"]), D("0.12737763"))
+                self.assertEqual(D(p["remaining_btc"]), D("0.12736999"))
                 self.assertLess(abs(D(p["pnl_identity_residual_usdt_at_parity"])), D("0.00000002"))

@@ -13,7 +13,7 @@ Prices and cash amounts are **USDT**. Positive funding is income. The remembered
 
 ## Execution chronology
 
-Same-time fills at the same price are grouped below; every individual fill and funding payment is retained in `hedge-evidence.json`.
+Same-time fills at the same price are grouped below; every individual fill and funding payment is retained in `artifacts/hedge-evidence.json`.
 
 | Local time | Synthetic action | BTC | Fill price, USDT/BTC | Fee, USDT | Short after fill, BTC |
 |---|---|---:|---:|---:|---:|
@@ -31,13 +31,13 @@ The largest selected hedge was **0.0589 BTC**, with **3,861.89 USDT** opening no
 
 ## Recalculated average
 
-Current full-wallet quantity remains **0.12737763 BTC**. Figures below assume **1 USDC = 1 USDT** and exclude unvalued gas.
+Current full-wallet quantity remains **0.12736999 BTC**. Figures below assume **1 USDC = 1 USDT** and exclude unvalued gas.
 
 | Scenario | Average / BTC, transfer fees expensed | Average / BTC, identified transfer fees capitalized |
 |---|---:|---:|
-| Physical purchases only | 71,467.00 | 71,513.59 |
-| 16–23 August hedge as sell/rebuy | 75,372.87 | 75,408.45 |
-| Both July–August hedges as sell/rebuy | 75,243.72 | 75,278.13 |
+| Physical purchases only | 71,467.00 | 71,517.88 |
+| 16–23 August hedge as sell/rebuy | 75,372.87 | 75,412.98 |
+| Both July–August hedges as sell/rebuy | 75,243.72 | 75,282.64 |
 
 Immediately after the **23 August close**, the blended exposure average was:
 
@@ -54,19 +54,20 @@ Funding is separate realized cash income/expense in the main table. If instead c
 
 | Scenario | Transfer fees expensed | Identified transfer fees capitalized |
 |---|---:|---:|
-| 16–23 August hedge | 75,337.09 | 75,372.66 |
-| Both hedges | 75,205.61 | 75,240.00 |
+| 16–23 August hedge | 75,337.09 | 75,377.19 |
+| Both hedges | 75,205.61 | 75,244.51 |
 
 The higher synthetic remaining basis is **not simply the hedge loss added to the physical basis**: opening the hedge also realizes the synthetic sale's difference from the old acquisition basis. Do not add the exported swap loss again after replaying the sale/rebuy fills.
 
-`hedge-reconciliation.json` records both scenario traces, the basis after every event and an independent PnL identity check. Physical plus derivative PnL equals synthetic realized plus unrealized PnL after accounting for fees; the loss is counted once.
+`artifacts/hedge-reconciliation.json` records scenario summaries and an independent PnL identity check. Full replay timelines can be regenerated with `calculate()` from the preserved event evidence. Physical plus derivative PnL equals synthetic realized plus unrealized PnL after accounting for fees; the loss is counted once.
 
 Contract conversion: **1 contract = 0.01 BTC**, per the [OKX instrument specification](https://www.okx.com/api/v5/public/instruments?instType=SWAP&instId=BTC-USDT-SWAP), independently validated by matching both exported closing PnLs exactly. Collateral/margin movements are not trade quantities or additional losses.
 
 ## Repeat
 
+Use preserved evidence for unchanged hedges. Import private exports only when new evidence is required; see [research workflow](../README.md).
+
 ```sh
-python3 scripts/reconcile-btc-hedge.py import-private
 python3 scripts/reconcile-btc-hedge.py calculate
 python3 scripts/reconcile-btc-hedge.py verify
 ```

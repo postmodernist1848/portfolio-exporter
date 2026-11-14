@@ -7,14 +7,9 @@ from decimal import Decimal
 from pathlib import Path
 from urllib.request import urlopen
 
-ROOT = Path(__file__).resolve().parents[1] / "research" / "btc-cost-basis"
-ADDRESSES = [
-    "bc1q45v5f5gq2rdrek3n9qkn8g85h6eq80r2m99jn7",
-    "bc1qn9an2rzjt752j83x0nxjjgf59mmy34td806daw",
-    # Derived change/receive addresses: ownership confirmed by the user.
-    "bc1qtg22qeel8htmdh5em3f0nu2rghygh8tfvzy2w3",
-    "bc1qshzgardj4ewnq0nqzaqlmtmzevguxhpy9qcmyc",
-]
+ROOT = Path(__file__).resolve().parents[1] / "research" / "btc-cost-basis" / "artifacts"
+# One ownership registry shared with the research artifacts.
+ADDRESSES = [x["address"] for x in json.loads((ROOT / "wallet-ownership.json").read_text())["bitcoin"]]
 
 
 def get(url):
@@ -97,6 +92,7 @@ def fetch():
 def verify():
     history = json.loads((ROOT / "bitcoin-history.json").read_text())
     ledger = json.loads((ROOT / "purchases.json").read_text())
+    assert history["addresses"] == ADDRESSES, "Refresh history after changing ownership scope"
     txs = history["transactions"]
     assert len({x["txid"] for x in txs}) == len(txs)
     assert [x["block_height"] for x in txs] == sorted(x["block_height"] for x in txs)

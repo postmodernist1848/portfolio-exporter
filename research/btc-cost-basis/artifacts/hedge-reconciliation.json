@@ -1,0 +1,135 @@
+{
+  "schema_version": 1,
+  "view": "Synthetic sell at short entry; repurchase at short close",
+  "actual_physical_btc_unchanged": true,
+  "estimated_currency_assumption": "1 USDC = 1 USDT",
+  "funding_policy": "Funding recognized separately; optional funding-carried scenario credits each episode's funding at closing repurchase",
+  "fee_policy": "Opening swap fees reduce synthetic sale proceeds; closing fees increase synthetic repurchase cost",
+  "excluded": "Unrelated OKX swaps/margin trades, collateral transfers and manual margin changes",
+  "warning": "Do not add exported swap price PnL to basis again: entry/exit fills already represent it",
+  "scenarios": {
+    "loss_hedge_only": {
+      "episodes": [
+        "august_loss_hedge"
+      ],
+      "actual_net_hedge_cash_pnl_usdt": "-629.56116879",
+      "policies": {
+        "expense_transfer_fees": {
+          "remaining_btc": "0.1273699900",
+          "remaining_basis_native": {
+            "USDT": "6155.300639457273960967376434431252350071",
+            "USDC": "3444.940840882160790981817154919801017532"
+          },
+          "estimated_basis_usdt_at_usdc_parity": "9600.241480339434751949193589351053367603",
+          "estimated_average_usdt_per_btc_at_usdc_parity": "75372.86828977088521361423981701697054073",
+          "synthetic_realized_native": {
+            "USDT": "-77.5883289116977320590673061605334925274",
+            "USDC": "-55.35768607643435314934752296178006300769"
+          },
+          "expensed_native": {
+            "USDT": "4.972200421028306973556259408214157399843",
+            "USDC": "1.692962951404855868835322118418919460365"
+          },
+          "funding_cash_usdt": "4.55869743",
+          "hedge_execution_price_pnl_usdt": "-629.943000000000",
+          "hedge_trading_fees_usdt": "4.17686622",
+          "pnl_identity_residual_usdt_at_parity": "3E-36",
+          "averages_immediately_after_episode_close_at_parity": {
+            "august_loss_hedge": "75093.90967103685942496540255970671764823"
+          },
+          "average_with_funding_carried_into_basis_at_parity": "75337.09060277814670697456640688245508031",
+          "physical_baseline_average_at_parity": "71467.00016149734356890595992700498649072"
+        },
+        "capitalize_identified_transfer_fees": {
+          "remaining_btc": "0.1273699900",
+          "remaining_basis_native": {
+            "USDT": "6159.582916368244941503791780448161746012",
+            "USDC": "3445.767102472838103375366463193064860371"
+          },
+          "estimated_basis_usdt_at_usdc_parity": "9605.350018841083044879158243641226606383",
+          "estimated_average_usdt_per_btc_at_usdc_parity": "75412.97615585180657452480167142375222282",
+          "synthetic_realized_native": {
+            "USDT": "-78.2782524217550584962082195518382539889",
+            "USDC": "-56.22438743716189662463353680693513962898"
+          },
+          "expensed_native": {
+            "USDT": "0",
+            "USDC": "0"
+          },
+          "funding_cash_usdt": "4.55869743",
+          "hedge_execution_price_pnl_usdt": "-629.943000000000",
+          "hedge_trading_fees_usdt": "4.17686622",
+          "pnl_identity_residual_usdt_at_parity": "0E-36",
+          "averages_immediately_after_episode_close_at_parity": {
+            "august_loss_hedge": "75129.60986460684070865440823956337075863"
+          },
+          "average_with_funding_carried_into_basis_at_parity": "75377.18517062836422362252084373427843076",
+          "physical_baseline_average_at_parity": "71517.87753741920752200466771293825694853"
+        }
+      }
+    },
+    "both_hedges": {
+      "episodes": [
+        "july_august_hedge",
+        "august_loss_hedge"
+      ],
+      "actual_net_hedge_cash_pnl_usdt": "-629.45512593",
+      "policies": {
+        "expense_transfer_fees": {
+          "remaining_btc": "0.1273699900",
+          "remaining_basis_native": {
+            "USDT": "6144.635729379979429247309270564755058885",
+            "USDC": "3439.156299397102137836691668602280721785"
+          },
+          "estimated_basis_usdt_at_usdc_parity": "9583.792028777081567084000939167035780670",
+          "estimated_average_usdt_per_btc_at_usdc_parity": "75243.72129398048603979635186567130750870",
+          "synthetic_realized_native": {
+            "USDT": "-88.1863098862521766520194088346558797815",
+            "USDC": "-61.16344247562417882497903442180285835369"
+          },
+          "expensed_native": {
+            "USDT": "4.933086663768394100671320600589061335890",
+            "USDC": "1.671748037273683338329296975916419861530"
+          },
+          "funding_cash_usdt": "6.64332466",
+          "hedge_execution_price_pnl_usdt": "-629.861700000000",
+          "hedge_trading_fees_usdt": "6.23675059",
+          "pnl_identity_residual_usdt_at_parity": "-1E-36",
+          "averages_immediately_after_episode_close_at_parity": {
+            "july_august_hedge": "66173.23184926006440392644156413175024987",
+            "august_loss_hedge": "74854.41510201975229474836840495271439215"
+          },
+          "average_with_funding_carried_into_basis_at_parity": "75205.60892407609765959871301437125045290",
+          "physical_baseline_average_at_parity": "71467.00016149734356890595992700498649072"
+        },
+        "capitalize_identified_transfer_fees": {
+          "remaining_btc": "0.1273699900",
+          "remaining_basis_native": {
+            "USDT": "6148.863930315973101322043548298528115856",
+            "USDC": "3439.885650042533116087050822179776508788"
+          },
+          "estimated_basis_usdt_at_usdc_parity": "9588.749580358506217409094370478304624644",
+          "estimated_average_usdt_per_btc_at_usdc_parity": "75282.64374016600156291991834558756442270",
+          "synthetic_realized_native": {
+            "USDT": "-88.8911956140268986779564517014718841450",
+            "USDC": "-62.10583986746688391294917782022349121209"
+          },
+          "expensed_native": {
+            "USDT": "0",
+            "USDC": "0"
+          },
+          "funding_cash_usdt": "6.64332466",
+          "hedge_execution_price_pnl_usdt": "-629.861700000000",
+          "hedge_trading_fees_usdt": "6.23675059",
+          "pnl_identity_residual_usdt_at_parity": "0E-36",
+          "averages_immediately_after_episode_close_at_parity": {
+            "july_august_hedge": "66190.44863416489512004834794831271888227",
+            "august_loss_hedge": "74888.00681431999716873583570185229596517"
+          },
+          "average_with_funding_carried_into_basis_at_parity": "75244.50950953764654431896527517564830460",
+          "physical_baseline_average_at_parity": "71517.87753741920752200466771293825694853"
+        }
+      }
+    }
+  }
+}

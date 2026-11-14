@@ -3,8 +3,8 @@
   "scope": "Four user-confirmed BTC addresses plus two supplied HL accounts",
   "acquisition_provenance_complete_for_scope": true,
   "exact_average_usdt_per_btc": null,
-  "as_of": "2026-11-13T20:47:32.803106+00:00",
-  "confirmed_balance_btc": "0.12737763",
+  "as_of": "2026-11-14T13:16:06.304147+00:00",
+  "confirmed_balance_btc": "0.12736999",
   "conversion_assumption": "1 USDC = 1 USDT, explicitly approximate; native cost components retained",
   "accounting": "One moving-weighted-average pool of BTC and UBTC across tracked accounts; internal transfers preserve basis",
   "caveats": [
@@ -61,12 +61,12 @@
   ],
   "policies": {
     "expense_transfer_fees": {
-      "remaining_btc": "0.1273776300",
+      "remaining_btc": "0.1273699900",
       "remaining_basis_native": {
-        "USDT": "5592.372384958953855054779945331764539974",
-        "USDC": "3510.924718822195020048202923045103637396"
+        "USDT": "5592.036959303592812401901111593200439817",
+        "USDC": "3510.714136596322222996215315249825419456"
       },
-      "estimated_basis_usdt_at_usdc_parity": "9103.297103781148875102982868376868177370",
+      "estimated_basis_usdt_at_usdc_parity": "9102.751095899915035398116426843025859273",
       "estimated_average_usdt_per_btc_at_usdc_parity": "71467.00016149734356890595992700498649072",
       "realized_sale_pnl_native": {
         "USDT": "-11.50020010256112026643448238644998290234",
@@ -817,17 +817,34 @@
             "USDT": "0.2037623048555150597219836733049535652883",
             "USDC": "0.1279231895940102615156657773122692775138"
           }
+        },
+        {
+          "event": {
+            "time_ms": 1794657258000,
+            "kind": "fee_btc",
+            "id": "639ea185f678c76ec940b518c44e5aeaf83b11aa663c28f0c9bbb3b4495564c4",
+            "quantity_btc": "0.00000764"
+          },
+          "pool_btc": "0.1273699900",
+          "basis_native": {
+            "USDT": "5592.036959303592812401901111593200439817",
+            "USDC": "3510.714136596322222996215315249825419456"
+          },
+          "basis_removed_native": {
+            "USDT": "0.3354256553610426528788337385641001570323",
+            "USDC": "0.2105822258727970519876077952782179397568"
+          }
         }
       ]
     },
     "capitalize_identified_transfer_fees": {
-      "remaining_btc": "0.1273776300",
+      "remaining_btc": "0.1273699900",
       "remaining_basis_native": {
         "USDT": "5596.799799897438879733565517613550017098",
         "USDC": "3512.431546864870208152093788936718641054"
       },
       "estimated_basis_usdt_at_usdc_parity": "9109.231346762309087885659306550268658152",
-      "estimated_average_usdt_per_btc_at_usdc_parity": "71513.58795702439343459019693293295422557",
+      "estimated_average_usdt_per_btc_at_usdc_parity": "71517.87753741920752200466771293825694853",
       "realized_sale_pnl_native": {
         "USDT": "-11.50020010256112026643448238644998290234",
         "USDC": "10.44005695487020815209378893671864105373"
@@ -1576,6 +1593,23 @@
           "basis_removed_native": {
             "USDT": "0.2039161912171622726290947007915000738619",
             "USDC": "0.1279734292015974986259660311852785366534"
+          }
+        },
+        {
+          "event": {
+            "time_ms": 1794657258000,
+            "kind": "fee_btc",
+            "id": "639ea185f678c76ec940b518c44e5aeaf83b11aa663c28f0c9bbb3b4495564c4",
+            "quantity_btc": "0.00000764"
+          },
+          "pool_btc": "0.1273699900",
+          "basis_native": {
+            "USDT": "5596.799799897438879733565517613550017098",
+            "USDC": "3512.431546864870208152093788936718641054"
+          },
+          "basis_removed_native": {
+            "USDT": "0.3356912078770537106175114151092897719217",
+            "USDC": "0.2106726041146126552227576894583179983616"
           }
         }
       ]

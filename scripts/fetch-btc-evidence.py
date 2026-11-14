@@ -60,12 +60,6 @@ if __name__ == "__main__":
             if kind == "userFillsByTime":
                 body["aggregateByTime"] = False
             jobs.append((f"hl-{i}-{kind}", "https://api.hyperliquid.xyz/info", body))
-    jobs.append(("acceleration-txs", "https://blockstream.info/api/address/"
-                 "bc1qtg22qeel8htmdh5em3f0nu2rghygh8tfvzy2w3/txs", None))
-    jobs.append(("change-next-outspends", "https://blockstream.info/api/tx/"
-                 "7021d6bf2470c4edc7fbaf1f6359289b77b8a347d06a84a1172d77f2f97ef0be/outspends", None))
-    jobs.append(("change-next-state", "https://blockstream.info/api/address/"
-                 "bc1qshzgardj4ewnq0nqzaqlmtmzevguxhpy9qcmyc", None))
     with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
         futures = [executor.submit(fetch, *job, args.directory) for job in jobs]
         for future in concurrent.futures.as_completed(futures):

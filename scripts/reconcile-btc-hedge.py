@@ -13,7 +13,8 @@ from pathlib import Path
 from zoneinfo import ZoneInfo
 
 ROOT = Path(__file__).resolve().parents[1]
-DATA = ROOT / "research/btc-cost-basis"
+REPORTS = ROOT / "research/btc-cost-basis"
+DATA = REPORTS / "artifacts"
 BASE = runpy.run_path(str(Path(__file__).with_name("reconcile-btc.py")))
 Pool = BASE["Pool"]
 LOCAL = timezone(timedelta(hours=3))
@@ -242,7 +243,7 @@ def markdown(result):
         vals = [ep[k] for k in ["peak_short_btc", "weighted_entry_price_usdt", "weighted_exit_price_usdt", "reported_price_pnl_usdt", "trading_fees_usdt", "net_funding_cash_usdt", "net_hedge_cash_pnl_usdt"]]
         lines.append("| "+label+" | "+vals[0]+" | "+" | ".join(f"{D(v):,.6f}" for v in vals[1:])+" |")
     lines += ["", "Prices and cash amounts are **USDT**. Positive funding is income. The remembered roughly $700 loss corresponds to the second hedge: **629.56 USDT net loss**, closed at **76,262.10**.", "",
-        "## Execution chronology", "", "Same-time fills at the same price are grouped below; every individual fill and funding payment is retained in `hedge-evidence.json`.", "",
+        "## Execution chronology", "", "Same-time fills at the same price are grouped below; every individual fill and funding payment is retained in `artifacts/hedge-evidence.json`.", "",
         "| Local time | Synthetic action | BTC | Fill price, USDT/BTC | Fee, USDT | Short after fill, BTC |",
         "|---|---|---:|---:|---:|---:|"]
     groups = []
@@ -284,11 +285,20 @@ def markdown(result):
         ps=result["scenarios"][name]["policies"]
         lines.append("| "+label+" | "+" | ".join(f"{D(ps[k]['average_with_funding_carried_into_basis_at_parity']):,.2f}" for k in keys)+" |")
     lines += ["", "The higher synthetic remaining basis is **not simply the hedge loss added to the physical basis**: opening the hedge also realizes the synthetic sale's difference from the old acquisition basis. Do not add the exported swap loss again after replaying the sale/rebuy fills.", "",
-        "`hedge-reconciliation.json` records both scenario traces, the basis after every event and an independent PnL identity check. Physical plus derivative PnL equals synthetic realized plus unrealized PnL after accounting for fees; the loss is counted once.", "",
+        "`artifacts/hedge-reconciliation.json` records scenario summaries and an independent PnL identity check. Full replay timelines can be regenerated with `calculate()` from the preserved event evidence. Physical plus derivative PnL equals synthetic realized plus unrealized PnL after accounting for fees; the loss is counted once.", "",
         "Contract conversion: **1 contract = 0.01 BTC**, per the [OKX instrument specification](https://www.okx.com/api/v5/public/instruments?instType=SWAP&instId=BTC-USDT-SWAP), independently validated by matching both exported closing PnLs exactly. Collateral/margin movements are not trade quantities or additional losses.", "",
-        "## Repeat", "", "```sh", "python3 scripts/reconcile-btc-hedge.py import-private", "python3 scripts/reconcile-btc-hedge.py calculate", "python3 scripts/reconcile-btc-hedge.py verify", "```", "",
+        "## Repeat", "", "Use preserved evidence for unchanged hedges. Import private exports only when new evidence is required; see [research workflow](../README.md).", "", "```sh", "python3 scripts/reconcile-btc-hedge.py calculate", "python3 scripts/reconcile-btc-hedge.py verify", "```", "",
         "Offline verification uses sanitized evidence. Import reads only the combined ZIP in memory and discards account, order and bill identifiers. It never reads `.env`. [Physical report](README.md) · [Physical trades](trades-summary.md)", ""]
     return "\n".join(lines)
+
+
+def compact(result):
+    # Full timelines are reproducible from preserved physical events and hedge fills.
+    # Keep the scenario summaries and independent PnL identity, not four duplicate traces.
+    for scenario in result["scenarios"].values():
+        for policy in scenario["policies"].values():
+            policy.pop("timeline", None)
+    return result
 
 
 if __name__ == "__main__":
@@ -299,12 +309,12 @@ if __name__ == "__main__":
     if args.command=="import-private":
         import_private(args.directory)
     else:
-        result=calculate()
+        result=compact(calculate())
         if args.command=="calculate":
             save("hedge-reconciliation.json",result)
-            (DATA/"hedge-analysis.md").write_text(markdown(result))
+            (REPORTS/"hedge-analysis.md").write_text(markdown(result))
         else:
             assert result==read("hedge-reconciliation.json"),"Stored hedge calculation differs"
-            assert markdown(result)==(DATA/"hedge-analysis.md").read_text(),"Markdown differs from calculation"
+            assert markdown(result)==(REPORTS/"hedge-analysis.md").read_text(),"Markdown differs from calculation"
         print(json.dumps({name:{p:{k:v for k,v in r.items() if k not in ("timeline","synthetic_realized_native","expensed_native")}
                                  for p,r in s["policies"].items()} for name,s in result["scenarios"].items()},indent=2))

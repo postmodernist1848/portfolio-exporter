@@ -233,7 +233,7 @@ USDC, Alchemy и Hyperliquid. Проверяется время обновлен
 ### Средняя цена и P&L Bitcoin
 
 Средняя цена задана в `src/lib/config/bitcoin-cost-basis.ts` константой
-`BITCOIN_AVERAGE_PRICE_USDT`: 75 278,128352 USDT/BTC по отчёту
+`BITCOIN_AVERAGE_PRICE_USDT`: 75 282,643740 USDT/BTC по отчёту
 [о покупках и хеджах](research/btc-cost-basis/hedge-analysis.md).
 Она учитывает оба хеджа OKX как продажи/обратные покупки и комиссии переводов;
 фандинг учитывается отдельно в отчёте.

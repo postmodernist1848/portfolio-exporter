@@ -5,7 +5,7 @@
  * Applies to the current BTC balance in BTC_ADDRESSES. Update after acquisitions
  * or disposals that change the remaining weighted average, then collect again.
  */
-export const BITCOIN_AVERAGE_PRICE_USDT = 75_278.128352;
+export const BITCOIN_AVERAGE_PRICE_USDT = 75_282.643740;
 
 export function calculateBitcoinCostBasis(
   balanceBtc: number,

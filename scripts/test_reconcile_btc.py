@@ -1,6 +1,8 @@
 """Offline accounting tests: python3 -m unittest discover -s scripts -p 'test_reconcile_btc.py'."""
 import runpy
 import unittest
+from unittest.mock import patch
+from copy import deepcopy
 from decimal import Decimal as D
 from pathlib import Path
 
@@ -41,7 +43,7 @@ class AccountingTests(unittest.TestCase):
         self.assertEqual(set(result["reconciled_hl_accounts"].values()), {"0E-10"})
         self.assertEqual(len(result["bridge_routes"]), 4)
         for policy in result["policies"].values():
-            self.assertEqual(D(policy["remaining_btc"]), D("0.12737763"))
+            self.assertEqual(D(policy["remaining_btc"]), D("0.12736999"))
         self.assertIsNone(result["exact_average_usdt_per_btc"])
 
     def test_november_across_purchase_and_bridge_loss(self):
@@ -54,3 +56,29 @@ class AccountingTests(unittest.TestCase):
         self.assertEqual(D(route["hl_debit_btc"]), D("0.0258330811"))
         self.assertEqual(route["received_sats"], 2582844)
         self.assertEqual(D(route["bridge_loss_btc"]), D("0.0000046411"))
+
+
+    def test_consolidation_preserves_basis_and_reduces_quantity_by_fee(self):
+        result = MODULE["reconcile"]()
+        fee = D("0.00000764")
+        for name, policy in result["policies"].items():
+            previous, current = policy["events"][-2:]
+            self.assertEqual(current["event"]["id"], "639ea185f678c76ec940b518c44e5aeaf83b11aa663c28f0c9bbb3b4495564c4")
+            self.assertEqual(D(previous["pool_btc"]) - D(current["pool_btc"]), fee)
+            if name == "capitalize_identified_transfer_fees":
+                self.assertEqual(previous["basis_native"], current["basis_native"])
+            else:
+                before = sum(map(D, previous["basis_native"].values())) / D(previous["pool_btc"])
+                after = sum(map(D, current["basis_native"].values())) / D(current["pool_btc"])
+                self.assertLess(abs(before - after), D("1e-30"))
+
+    def test_unknown_outgoing_is_rejected_before_accounting(self):
+        original_read = MODULE["reconcile"].__globals__["read"]
+        def changed_read(name):
+            value = deepcopy(original_read(name))
+            if name == "bitcoin-history.json":
+                value["transactions"][-1]["outputs"][0]["address"] = "unknown-owner"
+            return value
+        with patch.dict(MODULE["reconcile"].__globals__, read=changed_read):
+            with self.assertRaisesRegex(AssertionError, "Unclassified outgoing BTC"):
+                MODULE["reconcile"]()

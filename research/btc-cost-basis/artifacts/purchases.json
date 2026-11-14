@@ -1,6 +1,6 @@
 {
   "schema_version": 2,
-  "as_of": "2026-11-13",
+  "as_of": "2026-11-14",
   "quote_currency": "USDT",
   "scope": "Four user-confirmed BTC addresses plus two HL accounts; BTC receipts from HL are internal transfers",
   "entire_wallet_average_usdt_per_btc": null,
@@ -177,7 +177,14 @@
       "classification": "internal_change_and_return_to_cold_wallet_user_confirmed",
       "proceeds_usdt": null,
       "basis_treatment": "Preserve basis; 351-sat parent and 110-sat child network fees are separate",
-      "followup_evidence": "change-branch.json"
+      "followup_evidence": "bitcoin-history.json"
+    },
+    {
+      "btc_txid": "639ea185f678c76ec940b518c44e5aeaf83b11aa663c28f0c9bbb3b4495564c4",
+      "confirmed_at": "2026-11-14T11:54:18+00:00",
+      "classification": "internal_consolidation_user_confirmed",
+      "basis_treatment": "Preserve basis; 764 sats network fee; all 12736999 remaining sats at original cold address",
+      "ownership_evidence": "User request confirms consolidation to main address; all inputs and output in confirmed ownership registry"
     }
   ]
 }

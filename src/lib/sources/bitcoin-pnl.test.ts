@@ -32,9 +32,9 @@ describe('Bitcoin cost basis in collected snapshots', () => {
     expect(snapshot.totalRub).toBe(1_200_000);
     expect(snapshot.status).toBe('ok');
     expect(basis.costBasis.averagePriceUsdt).toBe(BITCOIN_AVERAGE_PRICE_USDT);
-    expect(basis.costBasis.costBasisRub).toBeCloseTo(1_129_171.92528);
-    expect(basis.costBasis.unrealizedPnlRub).toBeCloseTo(70_828.07472);
-    expect(basis.costBasis.unrealizedPnlPercent).toBeCloseTo(6.2725678);
+    expect(basis.costBasis.costBasisRub).toBeCloseTo(1_129_239.65610);
+    expect(basis.costBasis.unrealizedPnlRub).toBeCloseTo(70_760.34390);
+    expect(basis.costBasis.unrealizedPnlPercent).toBeCloseTo(6.2661936744571545);
   });
 
   it('marks BTC using last-known-good prices as partial', async () => {
@@ -43,7 +43,7 @@ describe('Bitcoin cost basis in collected snapshots', () => {
   });
 
   it('handles losses, break-even and an empty wallet', () => {
-    expect(calculateBitcoinCostBasis(0.1, 6_000_000, 100).unrealizedPnlRub).toBeCloseTo(-152_781.28352);
+    expect(calculateBitcoinCostBasis(0.1, 6_000_000, 100).unrealizedPnlRub).toBeCloseTo(-152_826.43740);
     const even = calculateBitcoinCostBasis(0.1, BITCOIN_AVERAGE_PRICE_USDT * 100, 100);
     expect(even.unrealizedPnlRub).toBe(0);
     expect(even.unrealizedPnlPercent).toBe(0);
